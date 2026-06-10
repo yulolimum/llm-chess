@@ -1,0 +1,36 @@
+{
+  "name": "llm-chess",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "format": "prettier --write . --ignore-unknown --cache --log-level=error",
+    "format:check": "prettier --check . --ignore-unknown --cache --log-level=error",
+    "lint": "eslint --fix --cache --format=pretty .",
+    "lint:check": "eslint --cache --format=pretty .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chess.js": "catalog:"
+  },
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "@tsconfig/strictest": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-formatter-pretty": "catalog:",
+    "eslint-plugin-prettier": "catalog:",
+    "eslint-plugin-simple-import-sort": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-packagejson": "catalog:",
+    "prettier-plugin-sh": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "zx": "catalog:"
+  },
+  "packageManager": "pnpm@11.5.3"
+}
