@@ -1,7 +1,7 @@
 import type { Color } from 'chess.js'
 
 import { colorToPlayerName } from '../game/players.js'
-import { renderTemplateFile } from '../utils/templates.js'
+import { renderTemplateFile } from './templates.js'
 
 export async function renderPlayerPrompt(options: {
   color: Color
@@ -14,7 +14,7 @@ export async function renderPlayerPrompt(options: {
   const initialTurn = colorToPlayerName(options.initialTurn)
   const strategy = options.strategy === undefined ? '' : `\nStrategy guidance:\n\n${options.strategy}\n`
 
-  return renderTemplateFile(new URL('player.md', import.meta.url), {
+  return renderTemplateFile(new URL('../prompts/player.md', import.meta.url), {
     color: player,
     gameGuid: options.gameGuid,
     initialFen: options.initialFen,

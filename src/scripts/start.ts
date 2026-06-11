@@ -18,8 +18,8 @@ import { createGameStartedEvent } from '../game/events.js'
 import { appendGameEvent, ensureGamesDirectory, getGameJsonlPath, getGameLogPath } from '../game/files.js'
 import { colorToPlayerName } from '../game/players.js'
 import { readGameState } from '../game/state.js'
-import { renderPlayerPrompt } from '../prompts/player-prompt.js'
 import { createLogger, setSessionLogFile } from '../utils/create-logger.js'
+import { renderPlayerPrompt } from '../utils/player-prompt.js'
 import { createSortableGuid } from '../utils/strings.js'
 
 //
