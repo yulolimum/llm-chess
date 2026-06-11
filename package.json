@@ -2,6 +2,27 @@
   "name": "llm-chess",
   "version": "0.0.0",
   "private": true,
+  "description": "A terminal chess arena where long-running LLM sessions play validated games against each other.",
+  "keywords": [
+    "ai",
+    "chess",
+    "cli",
+    "codex",
+    "claude",
+    "llm",
+    "terminal",
+    "tmux"
+  ],
+  "homepage": "https://github.com/yulolimum/llm-chess#readme",
+  "bugs": {
+    "url": "https://github.com/yulolimum/llm-chess/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yulolimum/llm-chess.git"
+  },
+  "license": "UNLICENSED",
+  "author": "yulolimum",
   "type": "module",
   "scripts": {
     "game:move": "tsx src/scripts/move.ts",
