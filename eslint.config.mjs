@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint'
 export default tseslint.config(
   // global settings
   {
-    ignores: ['.context/**'],
+    ignores: ['.context/**', '.games/**'],
   },
 
   // global base

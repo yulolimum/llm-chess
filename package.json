@@ -4,14 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "format": "prettier --write . --ignore-unknown --cache --log-level=error",
-    "format:check": "prettier --check . --ignore-unknown --cache --log-level=error",
-    "lint": "eslint --fix --cache --format=pretty .",
-    "lint:check": "eslint --cache --format=pretty .",
-    "typecheck": "tsc --noEmit"
+    "game:start": "tsx src/scripts/start.ts"
   },
   "dependencies": {
+    "@node-cli/logger": "catalog:",
     "chess.js": "catalog:"
   },
   "devDependencies": {
