@@ -51,6 +51,7 @@ const modelOptionsByProvider = {
 } as const
 
 type Provider = (typeof providerOptions)[number]['value']
+type ProviderOption = (typeof providerOptions)[number]
 type ModelOption = {
   label: string
   value: string
@@ -64,6 +65,7 @@ type CapturedPiecesByPlayer = {
   black: CapturedPiece[]
   white: CapturedPiece[]
 }
+type InstalledProviders = Record<Provider, boolean>
 
 const capturedPieceOrder: Record<PieceSymbol, number> = {
   b: 2,
@@ -72,6 +74,10 @@ const capturedPieceOrder: Record<PieceSymbol, number> = {
   p: 4,
   q: 0,
   r: 1,
+}
+const providerCommandByProvider: Record<Provider, string> = {
+  claude: 'claude',
+  codex: 'codex',
 }
 
 //
@@ -159,6 +165,8 @@ Options:
 }
 
 await assertTmuxInstalled()
+const installedProviders = await detectInstalledProviders()
+assertAnyProviderInstalled(installedProviders)
 
 const whitePlayer = await selectPlayerConfig(
   'White',
@@ -325,6 +333,27 @@ async function assertTmuxInstalled(): Promise<void> {
   }
 }
 
+async function detectInstalledProviders(): Promise<InstalledProviders> {
+  const detectedProviders = {} as InstalledProviders
+
+  for (const provider of providerOptions) {
+    const result = await quiet(nothrow($`command -v ${providerCommandByProvider[provider.value]}`))
+    detectedProviders[provider.value] = result.exitCode === 0
+  }
+
+  return detectedProviders
+}
+
+function assertAnyProviderInstalled(detectedProviders: InstalledProviders): void {
+  if (providerOptions.some(provider => detectedProviders[provider.value])) {
+    return
+  }
+
+  print('At least one LLM provider CLI is required to start a game.')
+  print('Install Claude Code or Codex, then run the command again.')
+  process.exit(1)
+}
+
 async function cleanupExistingGameSessions(): Promise<void> {
   const result = await quiet(nothrow($`tmux list-sessions -F '#{session_name}'`))
 
@@ -377,14 +406,16 @@ async function selectPlayerConfig(
     strategy: string | undefined
   },
 ): Promise<PlayerConfig> {
+  const availableProviderOptions = getAvailableProviderOptions()
   const provider =
     defaults.provider ??
     (await select<Provider>({
-      choices: providerOptions.map(provider => ({ name: provider.label, value: provider.value })),
-      default: readCachedProvider(fields.provider) ?? providerOptions[0]?.value,
+      choices: availableProviderOptions.map(provider => ({ name: provider.label, value: provider.value })),
+      default: readCachedProvider(fields.provider) ?? availableProviderOptions[0]?.value,
       message: `${label} provider?`,
     }))
 
+  validateProviderInstalled(provider)
   recordArg(fields.provider, provider)
   cache.args[fields.provider] = provider
   await writeCache(cache)
@@ -524,6 +555,22 @@ function parseProvider(value: unknown): Provider | undefined {
 
 function isProvider(value: string): value is Provider {
   return providerOptions.some(provider => provider.value === value)
+}
+
+function getAvailableProviderOptions(): ProviderOption[] {
+  return providerOptions.filter(provider => installedProviders[provider.value])
+}
+
+function validateProviderInstalled(provider: Provider): void {
+  if (installedProviders[provider]) {
+    return
+  }
+
+  print(
+    `${getProviderLabel(provider)} is not available because the "${providerCommandByProvider[provider]}" CLI was not found.`,
+  )
+  print(`Install ${getProviderLabel(provider)} or choose another provider.`)
+  process.exit(1)
 }
 
 function validateModel(provider: Provider, model: string): void {
