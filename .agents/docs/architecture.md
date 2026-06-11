@@ -50,8 +50,18 @@ Each game writes two runtime files:
 
 The JSONL record is the source of truth for reconstructing a game. The log file is operational output.
 
+## Terminal UI
+
+Terminal UI components are rendered with Ink.
+
+The chessboard reads board state from `chess.js`. UI components should not maintain a separate chess position model when the engine already provides the board state.
+
+The local storybook script is used to preview terminal UI components outside the game runner.
+
 ## Current State
 
 The coordination approach has been validated. The non-chess validation code has been removed.
+
+The repository has a terminal-rendered chessboard backed by `chess.js` board state.
 
 The repository is ready for chess-specific move submission, move validation, turn waiting, game replay, and match completion detection.

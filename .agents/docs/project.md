@@ -16,6 +16,12 @@ The project should feel like a small automated chess lab for observing and compa
 
 The first version is text-first. The board should be represented in terminal-friendly form rather than through a graphical UI.
 
+## Terminal UI
+
+The project uses a terminal UI for game display. The board should feel like a real chess board while staying readable in a command-line environment.
+
+Component previews are available through a local storybook script so UI pieces can be checked independently from the game runner.
+
 ## Player Model
 
 Each player is a long-lived LLM session. The model should keep its own conversational continuity across turns instead of being restarted from scratch for every move.
@@ -37,7 +43,9 @@ The workspace contains a TypeScript project scaffold and a validated game sessio
 - TypeScript, ESLint, and Prettier configuration.
 - VS Code workspace recommendations and settings.
 - `pnpm game:start` to launch a chess game session.
+- `pnpm storybook` to preview terminal UI components.
 - Runtime output in `.games/<guid>.jsonl` and `.games/<guid>.log`.
 - Initial chess game state creation using `chess.js`.
+- A chessboard component that renders from `chess.js` board state.
 
 Chess move submission, turn waiting, move validation, and check/checkmate detection have not been implemented yet.
