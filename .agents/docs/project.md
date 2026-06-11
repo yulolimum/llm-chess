@@ -47,5 +47,9 @@ The workspace contains a TypeScript project scaffold and a validated game sessio
 - Runtime output in `.games/<guid>.jsonl` and `.games/<guid>.log`.
 - Initial chess game state creation using `chess.js`.
 - A chessboard component that renders from `chess.js` board state.
-
-Chess move submission, turn waiting, move validation, and check/checkmate detection have not been implemented yet.
+- Player provider and model selection when starting a game.
+- Static model option lists for supported CLIs.
+- Chess move submission and turn waiting through project scripts.
+- Move validation, replay, and basic match completion detection through `chess.js`.
+- Public move rationales recorded with validated moves.
+- Explicit game-end records with result and resolution reason.

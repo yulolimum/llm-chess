@@ -14,8 +14,8 @@ The runner is intended to run from a normal terminal. It is not designed around 
 
 Each player runs in its own tmux session. The sessions are named from the game id:
 
-- `llm-chess-<guid>-player-a`
-- `llm-chess-<guid>-player-b`
+- `llm-chess-<guid>-white`
+- `llm-chess-<guid>-black`
 
 The runner starts these sessions but does not attach to them. The foreground process remains the game manager.
 
@@ -41,6 +41,8 @@ Project scripts are responsible for:
 - blocking while the model should wait,
 - returning clear output when the model should continue.
 
+Players submit moves as plain move text. They do not write game records directly.
+
 ## Game Records
 
 Each game writes two runtime files:
@@ -49,6 +51,10 @@ Each game writes two runtime files:
 - `.games/<guid>.log` for runner logs.
 
 The JSONL record is the source of truth for reconstructing a game. The log file is operational output.
+
+Game records include a terminal event when the match ends. The end event records the final position, result, and resolution reason, such as checkmate or draw.
+
+Player scripts keep their terminal output focused on turn coordination. Detailed diagnostics are written to the game log.
 
 ## Terminal UI
 
@@ -64,4 +70,4 @@ The coordination approach has been validated. The non-chess validation code has 
 
 The repository has a terminal-rendered chessboard backed by `chess.js` board state.
 
-The repository is ready for chess-specific move submission, move validation, turn waiting, game replay, and match completion detection.
+The repository has chess-specific move submission, move validation, turn waiting, game replay, match completion detection, and explicit game-end records.
