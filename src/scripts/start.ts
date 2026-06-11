@@ -6,11 +6,12 @@ import input from '@inquirer/input'
 import select from '@inquirer/select'
 import { render } from 'ink'
 import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 import process from 'node:process'
 import { setTimeout } from 'node:timers/promises'
 import prettyMilliseconds from 'pretty-ms'
 import React from 'react'
-import { $, minimist, nothrow, quiet, quote } from 'zx'
+import { $, fs, minimist, nothrow, quiet, quote } from 'zx'
 
 import { ChessBoard } from '../components/ChessBoard.js'
 import { createGameStartedEvent } from '../game/events.js'
@@ -24,6 +25,7 @@ import { createSortableGuid } from '../utils/strings.js'
 //
 // Constants
 //
+const scriptName = 'game-start'
 const scriptCommand = 'pnpm game:start'
 const sessionPrefix = 'llm-chess'
 const providerOptions = [
@@ -49,7 +51,6 @@ const modelOptionsByProvider = {
 } as const
 
 type Provider = (typeof providerOptions)[number]['value']
-type Model<P extends Provider = Provider> = (typeof modelOptionsByProvider)[P][number]['value']
 type ModelOption = {
   label: string
   value: string
@@ -92,6 +93,46 @@ const parsedArgs = {
   whiteStrategy: readStringArg(args['whiteStrategy']),
 }
 
+type ArgNames = keyof typeof parsedArgs
+type Args = { [K in ArgNames]: NonNullable<(typeof parsedArgs)[K]> }
+type PlayerConfigFields = {
+  model: 'blackModel' | 'whiteModel'
+  provider: 'blackProvider' | 'whiteProvider'
+  strategy: 'blackStrategy' | 'whiteStrategy'
+}
+
+const accumulatedArgs: Partial<Args> = {
+  help: parsedArgs.help,
+}
+
+//
+// Cache
+//
+type Cache = {
+  args: Partial<Args>
+}
+
+const repoRoot = process.cwd()
+const cacheDir = path.join(repoRoot, 'node_modules', '.cache', scriptName)
+const cacheFile = path.join(cacheDir, 'cache.json')
+
+async function readCache(): Promise<Cache> {
+  try {
+    const cache = (await fs.readJson(cacheFile)) as Cache
+    cache.args = cache.args || {}
+    return cache
+  } catch {
+    return { args: {} }
+  }
+}
+
+async function writeCache(cache: Cache): Promise<void> {
+  await fs.ensureDir(cacheDir)
+  await fs.writeJson(cacheFile, cache, { spaces: 2 })
+}
+
+const cache = await readCache()
+
 //
 // Logging
 //
@@ -119,16 +160,32 @@ Options:
 
 await assertTmuxInstalled()
 
-const whitePlayer = await selectPlayerConfig('White', {
-  model: parsedArgs.whiteModel,
-  provider: parsedArgs.whiteProvider,
-  strategy: parsedArgs.whiteStrategy,
-})
-const blackPlayer = await selectPlayerConfig('Black', {
-  model: parsedArgs.blackModel,
-  provider: parsedArgs.blackProvider,
-  strategy: parsedArgs.blackStrategy,
-})
+const whitePlayer = await selectPlayerConfig(
+  'White',
+  {
+    model: 'whiteModel',
+    provider: 'whiteProvider',
+    strategy: 'whiteStrategy',
+  },
+  {
+    model: parsedArgs.whiteModel,
+    provider: parsedArgs.whiteProvider,
+    strategy: parsedArgs.whiteStrategy,
+  },
+)
+const blackPlayer = await selectPlayerConfig(
+  'Black',
+  {
+    model: 'blackModel',
+    provider: 'blackProvider',
+    strategy: 'blackStrategy',
+  },
+  {
+    model: parsedArgs.blackModel,
+    provider: parsedArgs.blackProvider,
+    strategy: parsedArgs.blackStrategy,
+  },
+)
 
 const cwd = process.cwd()
 const gameGuid = createSortableGuid()
@@ -173,8 +230,10 @@ const blackSession = `${gameSessionPrefix}-black`
 const whiteActor = `cd ${quote(cwd)} && ${whiteCommand} ${quote(promptA)}`
 const blackActor = `cd ${quote(cwd)} && ${blackCommand} ${quote(promptB)}`
 const createdSessions: string[] = []
+const repeatGameCommand = createRepeatGameCommand()
 
 let cleanupPromise: Promise<void> | null = null
+let gameCompleted = false
 
 installShutdownHandlers(createdSessions)
 
@@ -201,8 +260,15 @@ try {
   logger.debug('black prompt:', promptB)
 
   await streamBoardState(gameGuid)
+  gameCompleted = true
 } finally {
   await cleanupPlayerSessions(createdSessions)
+}
+
+if (gameCompleted) {
+  print('')
+  print('Re-run this game with:')
+  print(repeatGameCommand)
 }
 
 function installShutdownHandlers(sessions: string[]): void {
@@ -304,6 +370,7 @@ async function createPlayerSession(session: string, command: string): Promise<vo
 
 async function selectPlayerConfig(
   label: string,
+  fields: PlayerConfigFields,
   defaults: {
     model: string | undefined
     provider: Provider | undefined
@@ -314,14 +381,33 @@ async function selectPlayerConfig(
     defaults.provider ??
     (await select<Provider>({
       choices: providerOptions.map(provider => ({ name: provider.label, value: provider.value })),
+      default: readCachedProvider(fields.provider) ?? providerOptions[0]?.value,
       message: `${label} provider?`,
     }))
 
-  const model = defaults.model ?? (await selectModel(label, provider))
+  recordArg(fields.provider, provider)
+  cache.args[fields.provider] = provider
+  await writeCache(cache)
+
+  const model = defaults.model ?? (await selectModel(label, provider, readCachedModel(fields.model, provider)))
 
   validateModel(provider, model)
 
-  const strategy = defaults.strategy ?? (await selectStrategy(label))
+  recordArg(fields.model, model)
+  cache.args[fields.model] = model
+  await writeCache(cache)
+
+  const strategy = defaults.strategy ?? (await selectStrategy(label, readCachedStrategy(fields.strategy)))
+
+  recordArg(fields.strategy, strategy)
+
+  if (strategy === undefined) {
+    delete cache.args[fields.strategy]
+  } else {
+    cache.args[fields.strategy] = strategy
+  }
+
+  await writeCache(cache)
 
   return {
     model,
@@ -330,17 +416,23 @@ async function selectPlayerConfig(
   }
 }
 
-async function selectModel(providerLabel: string, provider: Provider): Promise<string> {
+async function selectModel(
+  providerLabel: string,
+  provider: Provider,
+  defaultModel: string | undefined,
+): Promise<string> {
   const models = modelOptionsByProvider[provider]
 
-  return select<Model<typeof provider>>({
+  return select<string>({
     choices: models.map(model => ({ name: model.label, value: model.value })),
+    default: defaultModel ?? models[0]?.value,
     message: `${providerLabel} model?`,
   })
 }
 
-async function selectStrategy(label: string): Promise<string | undefined> {
+async function selectStrategy(label: string, defaultStrategy: string | undefined): Promise<string | undefined> {
   const strategy = await input({
+    default: defaultStrategy ?? '',
     message: `${label} strategy?`,
   })
 
@@ -579,4 +671,53 @@ function formatDurationBetween(startTimestamp: string, endTimestamp: string): st
   }
 
   return prettyMilliseconds(duration, { compact: true })
+}
+
+function createRepeatGameCommand(): string {
+  return Object.entries(accumulatedArgs).reduce((command, [name, value]) => {
+    if (value === undefined || value === false || name === 'help') {
+      return command
+    }
+
+    if (typeof value === 'boolean') {
+      return `${command} --${name}`
+    }
+
+    return `${command} --${name} ${quote(value)}`
+  }, scriptCommand)
+}
+
+function readCachedProvider(name: 'blackProvider' | 'whiteProvider'): Provider | undefined {
+  const value = cache.args[name]
+
+  return typeof value === 'string' && isProvider(value) ? value : undefined
+}
+
+function readCachedModel(name: 'blackModel' | 'whiteModel', provider: Provider): string | undefined {
+  const value = cache.args[name]
+
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  return modelOptionsByProvider[provider].some(option => option.value === value) ? value : undefined
+}
+
+function readCachedStrategy(name: 'blackStrategy' | 'whiteStrategy'): string | undefined {
+  const value = cache.args[name]
+
+  return typeof value === 'string' ? value : undefined
+}
+
+function recordArg(name: 'blackProvider' | 'whiteProvider', value: Provider): void
+function recordArg(
+  name: 'blackModel' | 'blackStrategy' | 'whiteModel' | 'whiteStrategy',
+  value: string | undefined,
+): void
+function recordArg(name: ArgNames, value: boolean | string | undefined): void {
+  if (value === undefined || value === false) {
+    return
+  }
+
+  ;(accumulatedArgs as Record<string, unknown>)[name] = value
 }
