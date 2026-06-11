@@ -7,6 +7,7 @@ import { render } from 'ink'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { setTimeout } from 'node:timers/promises'
+import prettyMilliseconds from 'pretty-ms'
 import React from 'react'
 import { $, minimist, nothrow, quiet, quote } from 'zx'
 
@@ -517,10 +518,12 @@ function createMoveFeed(state: GameState): MoveFeedEntry[] {
   ]
 
   let ply = 0
+  let previousTimestamp = state.started.timestamp
 
   for (const event of state.events) {
     if (event.type === 'move') {
       ply += 1
+      const duration = formatDurationBetween(previousTimestamp, event.timestamp)
       const entry: MoveFeedEntry = {
         color: event.move.color,
         move: event.move.san,
@@ -528,11 +531,16 @@ function createMoveFeed(state: GameState): MoveFeedEntry[] {
         type: 'move',
       }
 
+      if (duration !== undefined) {
+        entry.duration = duration
+      }
+
       if (event.rationale !== undefined) {
         entry.rationale = event.rationale
       }
 
       entries.push(entry)
+      previousTimestamp = event.timestamp
     }
 
     if (event.type === 'game_ended') {
@@ -544,4 +552,14 @@ function createMoveFeed(state: GameState): MoveFeedEntry[] {
   }
 
   return entries
+}
+
+function formatDurationBetween(startTimestamp: string, endTimestamp: string): string | undefined {
+  const duration = Date.parse(endTimestamp) - Date.parse(startTimestamp)
+
+  if (!Number.isFinite(duration) || duration < 0) {
+    return undefined
+  }
+
+  return prettyMilliseconds(duration, { compact: true })
 }

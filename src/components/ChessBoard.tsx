@@ -18,6 +18,7 @@ export type ChessBoardPlayer = {
 
 export type MoveFeedEntry = {
   color?: Color
+  duration?: string
   move?: string
   moveNumber?: number
   rationale?: string
@@ -117,6 +118,7 @@ function MoveFeedEntryView({ entry }: { entry: MoveFeedEntry }) {
         <Text bold>{entry.color === 'w' ? 'White' : 'Black'}</Text>
         <Text> - </Text>
         <Text color="#facc15">[{entry.move}]</Text>
+        {entry.duration === undefined ? null : <Text> - {entry.duration}</Text>}
         {entry.rationale === undefined ? null : <Text> - {entry.rationale}</Text>}
       </Box>
     )

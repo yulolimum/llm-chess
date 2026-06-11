@@ -23,6 +23,7 @@ catalog:
   globals: '17.6.0'
   ink: '7.0.5'
   prettier: '3.8.4'
+  pretty-ms: '9.3.0'
   prettier-plugin-packagejson: '3.0.2'
   prettier-plugin-sh: '0.18.1'
   react: '19.2.7'

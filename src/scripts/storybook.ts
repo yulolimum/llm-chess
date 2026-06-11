@@ -39,6 +39,7 @@ const components = {
           },
           {
             color: 'w',
+            duration: '12s',
             move: 'e4',
             moveNumber: 1,
             rationale: 'Controls the center and opens lines for the bishop and queen.',
@@ -46,6 +47,7 @@ const components = {
           },
           {
             color: 'b',
+            duration: '1m',
             move: 'c5',
             moveNumber: 1,
             rationale: 'Challenges the center from the flank and keeps the position unbalanced.',

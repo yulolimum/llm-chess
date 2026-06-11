@@ -13,6 +13,7 @@
     "@node-cli/logger": "catalog:",
     "chess.js": "catalog:",
     "ink": "catalog:",
+    "pretty-ms": "catalog:",
     "react": "catalog:",
     "react-devtools-core": "catalog:"
   },
