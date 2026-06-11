@@ -8,9 +8,11 @@ export async function renderPlayerPrompt(options: {
   gameGuid: string
   initialFen: string
   initialTurn: Color
+  strategy: string | undefined
 }): Promise<string> {
   const player = colorToPlayerName(options.color)
   const initialTurn = colorToPlayerName(options.initialTurn)
+  const strategy = options.strategy === undefined ? '' : `\nStrategy guidance:\n\n${options.strategy}\n`
 
   return renderTemplateFile(new URL('player.md', import.meta.url), {
     color: player,
@@ -18,6 +20,7 @@ export async function renderPlayerPrompt(options: {
     initialFen: options.initialFen,
     initialTurn,
     moveCommand: `pnpm game:move --game ${options.gameGuid} --player ${player} --move "<move>" --rationale "<public rationale>"`,
+    strategy,
     waitCommand: `pnpm game:wait --game ${options.gameGuid} --player ${player}`,
   })
 }

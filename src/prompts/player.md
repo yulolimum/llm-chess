@@ -6,6 +6,8 @@ Game GUID: {{gameGuid}}
 
 Use project scripts to interact with the game. Do not write or append JSON yourself.
 
+{{strategy}}
+
 At game start, {{initialTurn}} is to move.
 
 Initial FEN:

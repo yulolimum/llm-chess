@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
+    "@inquirer/input": "catalog:",
     "@inquirer/select": "catalog:",
     "@tsconfig/strictest": "catalog:",
     "@types/node": "catalog:",

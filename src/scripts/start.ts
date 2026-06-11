@@ -2,6 +2,7 @@ import type { CapturedPiece, ChessBoardPlayer, MoveFeedEntry, PlayerStatus } fro
 import type { GameState } from '../game/state.js'
 import type { Color, PieceSymbol } from 'chess.js'
 
+import input from '@inquirer/input'
 import select from '@inquirer/select'
 import { render } from 'ink'
 import { readFile } from 'node:fs/promises'
@@ -56,6 +57,7 @@ type ModelOption = {
 type PlayerConfig = {
   model: string
   provider: Provider
+  strategy: string | undefined
 }
 type CapturedPiecesByPlayer = {
   black: CapturedPiece[]
@@ -77,16 +79,18 @@ const capturedPieceOrder: Record<PieceSymbol, number> = {
 const args = minimist(process.argv.slice(2), {
   alias: { h: 'help', v: 'verbose' },
   boolean: ['help', 'verbose'],
-  string: ['blackModel', 'blackProvider', 'whiteModel', 'whiteProvider'],
+  string: ['blackModel', 'blackProvider', 'blackStrategy', 'whiteModel', 'whiteProvider', 'whiteStrategy'],
 })
 
 const parsedArgs = {
   blackModel: readStringArg(args['blackModel']),
   blackProvider: parseProvider(args['blackProvider']),
+  blackStrategy: readStringArg(args['blackStrategy']),
   help: Boolean(args['help']),
   verbose: Boolean(args['verbose']),
   whiteModel: readStringArg(args['whiteModel']),
   whiteProvider: parseProvider(args['whiteProvider']),
+  whiteStrategy: readStringArg(args['whiteStrategy']),
 }
 
 //
@@ -105,8 +109,10 @@ if (parsedArgs.help) {
 Options:
   --whiteProvider <provider>   Provider for white: claude, codex
   --whiteModel <model>         Model for white
+  --whiteStrategy <text>       Optional strategy guidance for white
   --blackProvider <provider>   Provider for black: claude, codex
   --blackModel <model>         Model for black
+  --blackStrategy <text>       Optional strategy guidance for black
   --verbose, -v       Enable debug logs.
   --help, -h          Show help.
 `)
@@ -118,10 +124,12 @@ await assertTmuxInstalled()
 const whitePlayer = await selectPlayerConfig('White', {
   model: parsedArgs.whiteModel,
   provider: parsedArgs.whiteProvider,
+  strategy: parsedArgs.whiteStrategy,
 })
 const blackPlayer = await selectPlayerConfig('Black', {
   model: parsedArgs.blackModel,
   provider: parsedArgs.blackProvider,
+  strategy: parsedArgs.blackStrategy,
 })
 
 const cwd = process.cwd()
@@ -153,12 +161,14 @@ const promptA = await renderPlayerPrompt({
   gameGuid,
   initialFen: gameStartedEvent.initialFen,
   initialTurn: gameStartedEvent.turn,
+  strategy: whitePlayer.strategy,
 })
 const promptB = await renderPlayerPrompt({
   color: 'b',
   gameGuid,
   initialFen: gameStartedEvent.initialFen,
   initialTurn: gameStartedEvent.turn,
+  strategy: blackPlayer.strategy,
 })
 
 const whiteCommand = createProviderCommand(whitePlayer, cwd)
@@ -302,6 +312,7 @@ async function selectPlayerConfig(
   defaults: {
     model: string | undefined
     provider: Provider | undefined
+    strategy: string | undefined
   },
 ): Promise<PlayerConfig> {
   const provider =
@@ -315,9 +326,12 @@ async function selectPlayerConfig(
 
   validateModel(provider, model)
 
+  const strategy = defaults.strategy ?? (await selectStrategy(label))
+
   return {
     model,
     provider,
+    strategy,
   }
 }
 
@@ -328,6 +342,14 @@ async function selectModel(providerLabel: string, provider: Provider): Promise<s
     choices: models.map(model => ({ name: model.label, value: model.value })),
     message: `${providerLabel} model?`,
   })
+}
+
+async function selectStrategy(label: string): Promise<string | undefined> {
+  const strategy = await input({
+    message: `${label} strategy?`,
+  })
+
+  return strategy.trim() === '' ? undefined : strategy
 }
 
 function createProviderCommand(player: PlayerConfig, cwd: string): string {
