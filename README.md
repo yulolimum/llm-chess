@@ -71,6 +71,16 @@ Game records are written to:
 
 The JSONL file is the game record. The log file is operational output for debugging.
 
+### Replays
+
+Replay a completed game:
+
+```sh
+pnpm game:replay
+```
+
+The replay command scans completed records in `.games`, asks which game to replay, then asks for playback speed. During playback it shows the board position for each move. After the final move, it shows the final board with the full activity feed.
+
 ### Full Command
 
 The start command can also be run non-interactively with explicit player settings:
@@ -83,4 +93,12 @@ pnpm game:start \
   --blackProvider codex \
   --blackModel gpt-5.5 \
   --blackStrategy "Play like you are 5 years old"
+```
+
+Replay can also be run non-interactively:
+
+```sh
+pnpm game:replay \
+  --game 20260611-175354407-1830292513731a16 \
+  --speed normal
 ```

@@ -26,6 +26,7 @@
   "type": "module",
   "scripts": {
     "game:move": "tsx src/scripts/move.ts",
+    "game:replay": "tsx src/scripts/replay.ts",
     "game:start": "tsx src/scripts/start.ts",
     "game:wait": "tsx src/scripts/wait.ts",
     "storybook": "tsx src/scripts/storybook.ts"

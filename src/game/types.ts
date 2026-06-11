@@ -10,9 +10,21 @@ export type MoveRecord = Pick<Move, 'after' | 'before' | 'color' | 'from' | 'lan
 
 export type GameStartedEvent = {
   initialFen: string
+  players?: GameStartedPlayers
   timestamp: string
   turn: PlayerColor
   type: 'game_started'
+}
+
+export type GameStartedPlayer = {
+  model: string
+  provider: string
+  strategy: string
+}
+
+export type GameStartedPlayers = {
+  black: GameStartedPlayer
+  white: GameStartedPlayer
 }
 
 export type MoveEvent = {

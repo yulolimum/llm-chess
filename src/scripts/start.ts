@@ -1,6 +1,4 @@
-import type { CapturedPiece, ChessBoardPlayer, MoveFeedEntry, PlayerStatus } from '../components/ChessBoard.js'
-import type { GameState } from '../game/state.js'
-import type { Color, PieceSymbol } from 'chess.js'
+import type { PlayerConfig, Provider, ProviderOption } from '../game/providers.js'
 
 import input from '@inquirer/input'
 import select from '@inquirer/select'
@@ -9,7 +7,6 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { setTimeout } from 'node:timers/promises'
-import prettyMilliseconds from 'pretty-ms'
 import React from 'react'
 import { $, fs, minimist, nothrow, quiet, quote } from 'zx'
 
@@ -17,6 +14,14 @@ import { ChessBoard } from '../components/ChessBoard.js'
 import { createGameStartedEvent } from '../game/events.js'
 import { appendGameEvent, ensureGamesDirectory, getGameJsonlPath, getGameLogPath } from '../game/files.js'
 import { colorToPlayerName } from '../game/players.js'
+import { createBoardPlayers, createMoveFeed } from '../game/presentation.js'
+import {
+  getProviderLabel,
+  isProvider,
+  modelOptionsByProvider,
+  providerCommandByProvider,
+  providerOptions,
+} from '../game/providers.js'
 import { readGameState } from '../game/state.js'
 import { createLogger, setSessionLogFile } from '../utils/create-logger.js'
 import { renderPlayerPrompt } from '../utils/player-prompt.js'
@@ -28,57 +33,7 @@ import { createSortableGuid } from '../utils/strings.js'
 const scriptName = 'game-start'
 const scriptCommand = 'pnpm game:start'
 const sessionPrefix = 'llm-chess'
-const providerOptions = [
-  { label: 'Claude', value: 'claude' },
-  { label: 'Codex', value: 'codex' },
-] as const
-const modelOptionsByProvider = {
-  claude: [
-    { label: 'Claude Fable 5', value: 'claude-fable-5' },
-    { label: 'Claude Opus 4.8', value: 'claude-opus-4-8' },
-    { label: 'Claude Opus 4.7', value: 'claude-opus-4-7' },
-    { label: 'Claude Opus 4.6', value: 'claude-opus-4-6' },
-    { label: 'Claude Sonnet 4.6', value: 'claude-sonnet-4-6' },
-    { label: 'Claude Sonnet 4.5', value: 'claude-sonnet-4-5' },
-    { label: 'Claude Haiku 4.5', value: 'claude-haiku-4-5' },
-  ],
-  codex: [
-    { label: 'GPT-5.5', value: 'gpt-5.5' },
-    { label: 'GPT-5.4', value: 'gpt-5.4' },
-    { label: 'GPT-5.4 Mini', value: 'gpt-5.4-mini' },
-    { label: 'GPT-5.3 Codex Spark', value: 'gpt-5.3-codex-spark' },
-  ],
-} as const
-
-type Provider = (typeof providerOptions)[number]['value']
-type ProviderOption = (typeof providerOptions)[number]
-type ModelOption = {
-  label: string
-  value: string
-}
-type PlayerConfig = {
-  model: string
-  provider: Provider
-  strategy: string | undefined
-}
-type CapturedPiecesByPlayer = {
-  black: CapturedPiece[]
-  white: CapturedPiece[]
-}
 type InstalledProviders = Record<Provider, boolean>
-
-const capturedPieceOrder: Record<PieceSymbol, number> = {
-  b: 2,
-  k: 5,
-  n: 3,
-  p: 4,
-  q: 0,
-  r: 1,
-}
-const providerCommandByProvider: Record<Provider, string> = {
-  claude: 'claude',
-  codex: 'codex',
-}
 
 //
 // Arguments
@@ -197,7 +152,12 @@ const blackPlayer = await selectPlayerConfig(
 
 const cwd = process.cwd()
 const gameGuid = createSortableGuid()
-const gameStartedEvent = createGameStartedEvent()
+const gameStartedEvent = createGameStartedEvent({
+  players: {
+    black: createStartedPlayer(blackPlayer),
+    white: createStartedPlayer(whitePlayer),
+  },
+})
 
 await ensureGamesDirectory()
 setSessionLogFile(getGameLogPath(gameGuid))
@@ -484,6 +444,14 @@ function createProviderCommand(player: PlayerConfig, cwd: string): string {
   return `claude --model ${quote(player.model)} --permission-mode bypassPermissions`
 }
 
+function createStartedPlayer(player: PlayerConfig) {
+  return {
+    model: player.model,
+    provider: player.provider,
+    strategy: player.strategy ?? '',
+  }
+}
+
 async function streamBoardState(gameGuid: string): Promise<void> {
   let consumedLines = 0
   let boardRender: ReturnType<typeof render> | null = null
@@ -495,12 +463,12 @@ async function streamBoardState(gameGuid: string): Promise<void> {
 
     if (nextLines.length > 0) {
       const state = await readGameState(gameGuid)
-      const capturedPieces = collectCapturedPieces(state)
+      const boardPlayers = createBoardPlayers(state)
       const board = React.createElement(ChessBoard, {
-        blackPlayer: createChessBoardPlayer(blackPlayer, createPlayerStatus('b', state), capturedPieces.black),
+        blackPlayer: boardPlayers.blackPlayer,
         board: state.chess.board(),
         moveFeed: createMoveFeed(state),
-        whitePlayer: createChessBoardPlayer(whitePlayer, createPlayerStatus('w', state), capturedPieces.white),
+        whitePlayer: boardPlayers.whitePlayer,
       })
 
       if (boardRender === null) {
@@ -552,11 +520,6 @@ function parseProvider(value: unknown): Provider | undefined {
 
   throw new Error(`Unknown provider "${provider}". Expected claude or codex.`)
 }
-
-function isProvider(value: string): value is Provider {
-  return providerOptions.some(provider => provider.value === value)
-}
-
 function getAvailableProviderOptions(): ProviderOption[] {
   return providerOptions.filter(provider => installedProviders[provider.value])
 }
@@ -583,141 +546,6 @@ function validateModel(provider: Provider, model: string): void {
   print(`Unknown ${provider} model "${model}".`)
   print(`Expected one of: ${validModels}`)
   process.exit(1)
-}
-
-function createChessBoardPlayer(
-  player: PlayerConfig,
-  status: PlayerStatus | undefined,
-  capturedPieces: readonly CapturedPiece[],
-): ChessBoardPlayer {
-  const displayPlayer = {
-    capturedPieces,
-    model: getModelLabel(player),
-    provider: getProviderLabel(player.provider),
-  }
-
-  if (status === undefined) {
-    return displayPlayer
-  }
-
-  return {
-    ...displayPlayer,
-    status,
-  }
-}
-
-function createPlayerStatus(color: Color, state: GameState): PlayerStatus | undefined {
-  if (state.chess.isGameOver()) {
-    if (state.ended?.winner === color) {
-      return 'won'
-    }
-
-    if (state.ended?.winner !== undefined) {
-      return 'lost'
-    }
-
-    return 'draw'
-  }
-
-  return state.chess.turn() === color ? 'on-move' : undefined
-}
-
-function getProviderLabel(provider: Provider): string {
-  return providerOptions.find(option => option.value === provider)?.label ?? provider
-}
-
-function getModelLabel(player: PlayerConfig): string {
-  const options: readonly ModelOption[] = modelOptionsByProvider[player.provider]
-
-  return options.find(option => option.value === player.model)?.label ?? player.model
-}
-
-function collectCapturedPieces(state: GameState): CapturedPiecesByPlayer {
-  const capturedPieces: CapturedPiecesByPlayer = {
-    black: [],
-    white: [],
-  }
-
-  for (const event of state.events) {
-    if (event.type !== 'move' || event.move.captured === undefined) {
-      continue
-    }
-
-    const capturedPiece = {
-      color: event.move.color === 'w' ? 'b' : 'w',
-      type: event.move.captured,
-    } as const satisfies CapturedPiece
-
-    if (event.move.color === 'w') {
-      capturedPieces.white.push(capturedPiece)
-    } else {
-      capturedPieces.black.push(capturedPiece)
-    }
-  }
-
-  capturedPieces.black.sort(compareCapturedPieces)
-  capturedPieces.white.sort(compareCapturedPieces)
-
-  return capturedPieces
-}
-
-function compareCapturedPieces(a: CapturedPiece, b: CapturedPiece): number {
-  return capturedPieceOrder[a.type] - capturedPieceOrder[b.type]
-}
-
-function createMoveFeed(state: GameState): MoveFeedEntry[] {
-  const entries: MoveFeedEntry[] = [
-    {
-      text: 'Game started',
-      type: 'game-started',
-    },
-  ]
-
-  let ply = 0
-  let previousTimestamp = state.started.timestamp
-
-  for (const event of state.events) {
-    if (event.type === 'move') {
-      ply += 1
-      const duration = formatDurationBetween(previousTimestamp, event.timestamp)
-      const entry: MoveFeedEntry = {
-        color: event.move.color,
-        move: event.move.san,
-        moveNumber: Math.ceil(ply / 2),
-        type: 'move',
-      }
-
-      if (duration !== undefined) {
-        entry.duration = duration
-      }
-
-      if (event.rationale !== undefined) {
-        entry.rationale = event.rationale
-      }
-
-      entries.push(entry)
-      previousTimestamp = event.timestamp
-    }
-
-    if (event.type === 'game_ended') {
-      entries.push({
-        text: `Game ended: ${event.result} by ${event.reason}`,
-        type: 'game-ended',
-      })
-    }
-  }
-
-  return entries
-}
-
-function formatDurationBetween(startTimestamp: string, endTimestamp: string): string | undefined {
-  const duration = Date.parse(endTimestamp) - Date.parse(startTimestamp)
-
-  if (!Number.isFinite(duration) || duration < 0) {
-    return undefined
-  }
-
-  return prettyMilliseconds(duration, { compact: true })
 }
 
 function createRepeatGameCommand(): string {

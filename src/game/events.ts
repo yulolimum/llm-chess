@@ -1,17 +1,30 @@
-import type { GameEndedEvent, GameEndReason, GameResult, GameStartedEvent, MoveEvent, MoveRecord } from './types.js'
+import type {
+  GameEndedEvent,
+  GameEndReason,
+  GameResult,
+  GameStartedEvent,
+  GameStartedPlayers,
+  MoveEvent,
+  MoveRecord,
+} from './types.js'
 import type { Color, Move } from 'chess.js'
 
 import { Chess } from 'chess.js'
 
-export function createGameStartedEvent(): GameStartedEvent {
+export function createGameStartedEvent(options: { players?: GameStartedPlayers } = {}): GameStartedEvent {
   const chess = new Chess()
-
-  return {
+  const event: GameStartedEvent = {
     initialFen: chess.fen(),
     timestamp: new Date().toISOString(),
     turn: chess.turn(),
     type: 'game_started',
   }
+
+  if (options.players !== undefined) {
+    event.players = options.players
+  }
+
+  return event
 }
 
 export function createMoveEvent(move: Move, options: { rationale: string }): MoveEvent {

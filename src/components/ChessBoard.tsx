@@ -71,16 +71,18 @@ export function ChessBoard({
   blackPlayer,
   board,
   moveFeed = [],
+  showMoveFeed = true,
   whitePlayer,
 }: {
   blackPlayer?: ChessBoardPlayer
   board: Board
   moveFeed?: readonly MoveFeedEntry[]
+  showMoveFeed?: boolean
   whitePlayer?: ChessBoardPlayer
 }) {
   return (
     <Box flexDirection="column" padding={1}>
-      <MoveFeed entries={moveFeed} />
+      {showMoveFeed ? <MoveFeed entries={moveFeed} /> : null}
       {blackPlayer === undefined ? null : <PlayerInfo player={blackPlayer} />}
       <Box flexDirection="column">
         {board.map((rank, rankIndex) => (

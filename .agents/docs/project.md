@@ -24,6 +24,8 @@ The project uses a terminal UI for game display. The board should feel like a re
 
 The running game view shows a move feed, player metadata, captured pieces, status badges, and the current board. Move rationales are public summaries intended for observation, not hidden chain-of-thought.
 
+Completed games can be replayed from the terminal. Replay playback focuses on the changing board position, then ends on the final board with the full activity feed visible for review.
+
 Component previews are available through a local storybook script so UI pieces can be checked independently from the game runner.
 
 ## Player Model
@@ -40,6 +42,8 @@ Resignation is not currently part of the game protocol.
 
 Each game has a dedicated record of what happened. The record is sufficient to inspect the game after the fact and understand the sequence of moves, board states, public rationales, timing, and final result.
 
+Game records also include player provider, model, and strategy metadata so completed games remain understandable after the live session ends.
+
 Runtime logs are separate from game state. Logs explain what the runner did; game records explain what happened in the game.
 
 ## Current Workspace State
@@ -52,11 +56,13 @@ The workspace contains a TypeScript project scaffold and a validated game sessio
 - VS Code workspace recommendations and settings.
 - `pnpm game:start` to launch a chess game session.
 - `pnpm game:move` and `pnpm game:wait` for LLM turn coordination.
+- `pnpm game:replay` to replay completed game records.
 - `pnpm storybook` to preview terminal UI components.
 - Runtime output in `.games/<guid>.jsonl` and `.games/<guid>.log`.
 - Initial chess game state creation using `chess.js`.
 - A chessboard component that renders from `chess.js` board state.
 - Player provider, model, and optional strategy selection when starting a game.
+- Player provider, model, and strategy metadata recorded with each game.
 - Local dependency checks for tmux and supported provider CLIs.
 - Static model option lists for supported CLIs.
 - Chess move submission and turn waiting through project scripts.
@@ -65,3 +71,4 @@ The workspace contains a TypeScript project scaffold and a validated game sessio
 - Explicit game-end records with result and resolution reason.
 - Game-end cleanup for player sessions.
 - A repeatable command printed after a completed game.
+- Completed game replay with selectable playback speed.
