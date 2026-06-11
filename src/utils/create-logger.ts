@@ -29,57 +29,69 @@ const ansiRegex = /\x1b\[[0-9;]*m/g
 
 export type CreateLoggerOptions = {
   color?: string
-  level: LogLevel
+  fileLevel?: LogLevel
   prefix?: string
+  terminalLevel: LogLevel | 'silent'
 }
 
 export function createLogger(options: CreateLoggerOptions) {
-  const { color, level, prefix } = options
-  const currentPriority = logLevelPriority[level]
+  const { color, fileLevel, prefix, terminalLevel } = options
+  const terminalPriority = terminalLevel === 'silent' ? -1 : logLevelPriority[terminalLevel]
+  const filePriority = fileLevel === undefined ? terminalPriority : logLevelPriority[fileLevel]
   const formattedPrefix = prefix && color ? chalk.hex(color)(prefix) : prefix
   const logger = new NodeCliLogger(formattedPrefix ? { prefix: formattedPrefix } : {})
 
-  function shouldLog(methodLevel: LogLevel): boolean {
-    return logLevelPriority[methodLevel] <= currentPriority
+  function shouldLogToTerminal(methodLevel: LogLevel): boolean {
+    return terminalLevel !== 'silent' && logLevelPriority[methodLevel] <= terminalPriority
+  }
+
+  function shouldLogToFile(methodLevel: LogLevel): boolean {
+    return logLevelPriority[methodLevel] <= filePriority
+  }
+
+  function writeLog(methodLevel: LogLevel, fileLevelLabel: string, args: unknown[]): void {
+    if (shouldLogToFile(methodLevel)) {
+      writeToSessionLog(fileLevelLabel, prefix, args)
+    }
   }
 
   return {
     debug(...args: Parameters<typeof console.log>) {
-      if (shouldLog('debug')) {
+      if (shouldLogToTerminal('debug')) {
         logger.debug(...args)
-        writeToSessionLog('debug', prefix, args)
       }
+      writeLog('debug', 'debug', args)
     },
     error(...args: Parameters<typeof console.log>) {
-      if (shouldLog('error')) {
+      if (shouldLogToTerminal('error')) {
         logger.error(...args)
-        writeToSessionLog('error', prefix, args)
       }
+      writeLog('error', 'error', args)
     },
     important(...args: Parameters<typeof console.log>) {
-      if (shouldLog('important')) {
+      if (shouldLogToTerminal('important')) {
         const greenArgs = args.map(arg => (typeof arg === 'string' ? chalk.green(arg) : arg))
         logger.log(...greenArgs)
-        writeToSessionLog('IMPRT', prefix, args)
       }
+      writeLog('important', 'IMPRT', args)
     },
     info(...args: Parameters<typeof console.log>) {
-      if (shouldLog('info')) {
+      if (shouldLogToTerminal('info')) {
         logger.info(...args)
-        writeToSessionLog('info', prefix, args)
       }
+      writeLog('info', 'info', args)
     },
     log(...args: Parameters<typeof console.log>) {
-      if (shouldLog('info')) {
+      if (shouldLogToTerminal('info')) {
         logger.log(...args)
-        writeToSessionLog('info', prefix, args)
       }
+      writeLog('info', 'info', args)
     },
     warn(...args: Parameters<typeof console.log>) {
-      if (shouldLog('warn')) {
+      if (shouldLogToTerminal('warn')) {
         logger.warn(...args)
-        writeToSessionLog('warn', prefix, args)
       }
+      writeLog('warn', 'warn', args)
     },
   }
 }
