@@ -1,3 +1,7 @@
+import type { CapturedPiece, ChessBoardPlayer, PlayerStatus } from '../components/ChessBoard.js'
+import type { GameState } from '../game/state.js'
+import type { Color, PieceSymbol } from 'chess.js'
+
 import select from '@inquirer/select'
 import { render } from 'ink'
 import { readFile } from 'node:fs/promises'
@@ -44,9 +48,26 @@ const modelOptionsByProvider = {
 
 type Provider = (typeof providerOptions)[number]['value']
 type Model<P extends Provider = Provider> = (typeof modelOptionsByProvider)[P][number]['value']
+type ModelOption = {
+  label: string
+  value: string
+}
 type PlayerConfig = {
   model: string
   provider: Provider
+}
+type CapturedPiecesByPlayer = {
+  black: CapturedPiece[]
+  white: CapturedPiece[]
+}
+
+const capturedPieceOrder: Record<PieceSymbol, number> = {
+  b: 2,
+  k: 5,
+  n: 3,
+  p: 4,
+  q: 0,
+  r: 1,
 }
 
 //
@@ -333,7 +354,12 @@ async function streamBoardState(gameGuid: string): Promise<void> {
 
     if (nextLines.length > 0) {
       const state = await readGameState(gameGuid)
-      const board = React.createElement(ChessBoard, { board: state.chess.board() })
+      const capturedPieces = collectCapturedPieces(state)
+      const board = React.createElement(ChessBoard, {
+        blackPlayer: createChessBoardPlayer(blackPlayer, createPlayerStatus('b', state), capturedPieces.black),
+        board: state.chess.board(),
+        whitePlayer: createChessBoardPlayer(whitePlayer, createPlayerStatus('w', state), capturedPieces.white),
+      })
 
       if (boardRender === null) {
         boardRender = render(board)
@@ -399,4 +425,84 @@ function validateModel(provider: Provider, model: string): void {
   print(`Unknown ${provider} model "${model}".`)
   print(`Expected one of: ${validModels}`)
   process.exit(1)
+}
+
+function createChessBoardPlayer(
+  player: PlayerConfig,
+  status: PlayerStatus | undefined,
+  capturedPieces: readonly CapturedPiece[],
+): ChessBoardPlayer {
+  const displayPlayer = {
+    capturedPieces,
+    model: getModelLabel(player),
+    provider: getProviderLabel(player.provider),
+  }
+
+  if (status === undefined) {
+    return displayPlayer
+  }
+
+  return {
+    ...displayPlayer,
+    status,
+  }
+}
+
+function createPlayerStatus(color: Color, state: GameState): PlayerStatus | undefined {
+  if (state.chess.isGameOver()) {
+    if (state.ended?.winner === color) {
+      return 'won'
+    }
+
+    if (state.ended?.winner !== undefined) {
+      return 'lost'
+    }
+
+    return 'draw'
+  }
+
+  return state.chess.turn() === color ? 'on-move' : undefined
+}
+
+function getProviderLabel(provider: Provider): string {
+  return providerOptions.find(option => option.value === provider)?.label ?? provider
+}
+
+function getModelLabel(player: PlayerConfig): string {
+  const options: readonly ModelOption[] = modelOptionsByProvider[player.provider]
+
+  return options.find(option => option.value === player.model)?.label ?? player.model
+}
+
+function collectCapturedPieces(state: GameState): CapturedPiecesByPlayer {
+  const capturedPieces: CapturedPiecesByPlayer = {
+    black: [],
+    white: [],
+  }
+
+  for (const event of state.events) {
+    if (event.type !== 'move' || event.move.captured === undefined) {
+      continue
+    }
+
+    const capturedPiece = {
+      color: event.move.color === 'w' ? 'b' : 'w',
+      type: event.move.captured,
+    } as const satisfies CapturedPiece
+
+    if (event.move.color === 'w') {
+      capturedPieces.white.push(capturedPiece)
+    } else {
+      capturedPieces.black.push(capturedPiece)
+    }
+  }
+
+  capturedPieces.black.sort(compareCapturedPieces)
+  capturedPieces.white.sort(compareCapturedPieces)
+
+  return capturedPieces
+}
+
+function compareCapturedPieces(a: CapturedPiece, b: CapturedPiece): number {
+  return capturedPieceOrder[a.type] - capturedPieceOrder[b.type]
 }

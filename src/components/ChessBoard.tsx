@@ -1,4 +1,4 @@
-import type { Chess } from 'chess.js'
+import type { Chess, Color, PieceSymbol } from 'chess.js'
 
 import { Box, Text } from 'ink'
 import React from 'react'
@@ -7,26 +7,116 @@ import { pieceSpriteHeight, pieceSprites, pieceSpriteWidth } from '../utils/piec
 
 type Board = ReturnType<Chess['board']>
 type Square = Board[number][number]
+export type PlayerStatus = 'draw' | 'lost' | 'on-move' | 'won'
 
-const boardFrame = '#18181b'
+export type ChessBoardPlayer = {
+  capturedPieces?: readonly CapturedPiece[]
+  model: string
+  provider: string
+  status?: PlayerStatus
+}
+
+export type CapturedPiece = {
+  color: Color
+  type: PieceSymbol
+}
+
 const lightSquare = '#9ca3af'
 const darkSquare = '#4b5563'
 const lightPiece = '#ffffff'
 const darkPiece = '#000000'
 const filledPixel = '██'
 const emptyPixel = '  '
+const filesPerRank = 8
+const renderedSquareWidth = pieceSpriteWidth * filledPixel.length
+const boardWidth = renderedSquareWidth * filesPerRank
+const capturedPieceGlyphs = {
+  b: '♝',
+  k: '♚',
+  n: '♞',
+  p: '♟',
+  q: '♛',
+  r: '♜',
+} as const satisfies Record<PieceSymbol, string>
+const statusDisplay = {
+  draw: {
+    backgroundColor: '#71717a',
+    label: ' DRAW ',
+  },
+  lost: {
+    backgroundColor: '#dc2626',
+    label: ' LOST ',
+  },
+  'on-move': {
+    backgroundColor: '#2563eb',
+    label: ' ON MOVE ',
+  },
+  won: {
+    backgroundColor: '#16a34a',
+    label: ' WON ',
+  },
+} as const satisfies Record<PlayerStatus, { backgroundColor: string; label: string }>
 
-export function ChessBoard({ board }: { board: Board }) {
+export function ChessBoard({
+  blackPlayer,
+  board,
+  whitePlayer,
+}: {
+  blackPlayer?: ChessBoardPlayer
+  board: Board
+  whitePlayer?: ChessBoardPlayer
+}) {
   return (
-    <Box flexDirection="column" paddingX={1} paddingY={1} backgroundColor={boardFrame}>
-      {board.map((rank, rankIndex) => (
-        <Box key={rankIndex}>
-          {rank.map((piece, fileIndex) => (
-            <SquareView key={`${rankIndex}-${fileIndex}`} fileIndex={fileIndex} piece={piece} rankIndex={rankIndex} />
-          ))}
-        </Box>
-      ))}
+    <Box flexDirection="column">
+      {blackPlayer === undefined ? null : <PlayerInfo player={blackPlayer} />}
+      <Box flexDirection="column">
+        {board.map((rank, rankIndex) => (
+          <Box key={rankIndex}>
+            {rank.map((piece, fileIndex) => (
+              <SquareView key={`${rankIndex}-${fileIndex}`} fileIndex={fileIndex} piece={piece} rankIndex={rankIndex} />
+            ))}
+          </Box>
+        ))}
+      </Box>
+      {whitePlayer === undefined ? null : <PlayerInfo player={whitePlayer} />}
     </Box>
+  )
+}
+
+function PlayerInfo({ player }: { player: ChessBoardPlayer }) {
+  return (
+    <Box justifyContent="space-between" paddingY={1} width={boardWidth}>
+      <Box>
+        <Text bold>{player.provider}</Text>
+        <Text> - {player.model}</Text>
+        {player.status === undefined ? null : (
+          <>
+            <Text> - </Text>
+            <Text backgroundColor={statusDisplay[player.status].backgroundColor} color="#ffffff">
+              {statusDisplay[player.status].label}
+            </Text>
+          </>
+        )}
+      </Box>
+      <CapturedPieces pieces={player.capturedPieces ?? []} />
+    </Box>
+  )
+}
+
+function CapturedPieces({ pieces }: { pieces: readonly CapturedPiece[] }) {
+  if (pieces.length === 0) {
+    return null
+  }
+
+  const pieceColor = pieces[0]?.color
+  const foregroundColor = pieceColor === 'w' ? lightPiece : darkPiece
+  const backgroundColor = pieceColor === 'w' ? darkPiece : lightPiece
+  const label = ` ${pieces.map(piece => capturedPieceGlyphs[piece.type]).join(' ')} `
+
+  return (
+    <Text backgroundColor={backgroundColor} color={foregroundColor}>
+      {label}
+    </Text>
   )
 }
 

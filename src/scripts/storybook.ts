@@ -20,7 +20,28 @@ const scriptCommand = 'pnpm storybook'
 const components = {
   chessboard: {
     name: 'ChessBoard',
-    render: () => React.createElement(ChessBoard, { board: new Chess().board() }),
+    render: () =>
+      React.createElement(ChessBoard, {
+        blackPlayer: {
+          capturedPieces: [
+            { color: 'w', type: 'p' },
+            { color: 'w', type: 'n' },
+            { color: 'w', type: 'p' },
+          ],
+          model: 'Claude Opus 4.8',
+          provider: 'Claude',
+        },
+        board: new Chess().board(),
+        whitePlayer: {
+          capturedPieces: [
+            { color: 'b', type: 'q' },
+            { color: 'b', type: 'p' },
+          ],
+          model: 'GPT-5.5',
+          provider: 'Codex',
+          status: 'on-move',
+        },
+      }),
   },
 } as const
 
