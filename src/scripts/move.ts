@@ -14,7 +14,7 @@ const scriptCommand = 'pnpm game:move'
 
 const args = minimist(process.argv.slice(2), {
   alias: { h: 'help' },
-  boolean: ['help', 'verbose'],
+  boolean: ['help'],
   string: ['game', 'move', 'player', 'rationale'],
 })
 
@@ -24,7 +24,6 @@ const parsedArgs = {
   move: readStringArg(args['move']),
   player: parsePlayerName(args['player']),
   rationale: readStringArg(args['rationale']),
-  verbose: Boolean(args['verbose']),
 }
 
 if (parsedArgs.help) {
@@ -33,9 +32,6 @@ if (parsedArgs.help) {
 The move can be SAN or coordinate notation, for example e4, Nf3, or e2e4.
 The rationale should be a concise public explanation for the move.
 Do not write JSON. This script validates the move and appends the game event.
-
-Options:
-  --verbose       Append debug details to the game log.
 `)
   process.exit(0)
 }
@@ -48,10 +44,7 @@ const rationale = requireArg(parsedArgs.rationale, '--rationale <text>')
 setSessionLogFile(getGameLogPath(gameGuid))
 
 const logger = createLogger({
-  color: '#86efac',
-  fileLevel: 'debug',
   prefix: '[game:move]',
-  terminalLevel: 'silent',
 })
 
 logger.debug('parsed args:', parsedArgs)

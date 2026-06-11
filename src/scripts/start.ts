@@ -77,8 +77,8 @@ const capturedPieceOrder: Record<PieceSymbol, number> = {
 // Arguments
 //
 const args = minimist(process.argv.slice(2), {
-  alias: { h: 'help', v: 'verbose' },
-  boolean: ['help', 'verbose'],
+  alias: { h: 'help' },
+  boolean: ['help'],
   string: ['blackModel', 'blackProvider', 'blackStrategy', 'whiteModel', 'whiteProvider', 'whiteStrategy'],
 })
 
@@ -87,7 +87,6 @@ const parsedArgs = {
   blackProvider: parseProvider(args['blackProvider']),
   blackStrategy: readStringArg(args['blackStrategy']),
   help: Boolean(args['help']),
-  verbose: Boolean(args['verbose']),
   whiteModel: readStringArg(args['whiteModel']),
   whiteProvider: parseProvider(args['whiteProvider']),
   whiteStrategy: readStringArg(args['whiteStrategy']),
@@ -113,7 +112,6 @@ Options:
   --blackProvider <provider>   Provider for black: claude, codex
   --blackModel <model>         Model for black
   --blackStrategy <text>       Optional strategy guidance for black
-  --verbose, -v       Enable debug logs.
   --help, -h          Show help.
 `)
   process.exit(0)
@@ -140,10 +138,7 @@ await ensureGamesDirectory()
 setSessionLogFile(getGameLogPath(gameGuid))
 
 const logger = createLogger({
-  color: '#7dd3fc',
-  fileLevel: parsedArgs.verbose ? 'debug' : 'info',
   prefix: '[game:start]',
-  terminalLevel: 'silent',
 })
 
 logger.debug('parsed args:', parsedArgs)

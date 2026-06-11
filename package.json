@@ -10,7 +10,6 @@
     "storybook": "tsx src/scripts/storybook.ts"
   },
   "dependencies": {
-    "@node-cli/logger": "catalog:",
     "chess.js": "catalog:",
     "ink": "catalog:",
     "pretty-ms": "catalog:",

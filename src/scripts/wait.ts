@@ -11,7 +11,7 @@ const scriptCommand = 'pnpm game:wait'
 
 const args = minimist(process.argv.slice(2), {
   alias: { h: 'help' },
-  boolean: ['help', 'verbose'],
+  boolean: ['help'],
   string: ['game', 'player'],
 })
 
@@ -19,16 +19,12 @@ const parsedArgs = {
   gameGuid: readStringArg(args['game']),
   help: Boolean(args['help']),
   player: parsePlayerName(args['player']),
-  verbose: Boolean(args['verbose']),
 }
 
 if (parsedArgs.help) {
   console.log(`Usage: ${scriptCommand} --game <guid> --player <white|black>
 
 Blocks until it is the selected player's turn, then prints the current board state.
-
-Options:
-  --verbose       Append debug details to the game log.
 `)
   process.exit(0)
 }
@@ -40,10 +36,7 @@ const playerColor = playerNameToColor(player)
 setSessionLogFile(getGameLogPath(gameGuid))
 
 const logger = createLogger({
-  color: '#fbbf24',
-  fileLevel: 'debug',
   prefix: '[game:wait]',
-  terminalLevel: 'silent',
 })
 
 let pollCount = 0
