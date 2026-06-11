@@ -1,6 +1,6 @@
 import type { GameEvent } from './types.js'
 
-import { appendFile, mkdir } from 'node:fs/promises'
+import { appendFile, mkdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 
 export function getGamesDirectory(): string {
@@ -22,4 +22,17 @@ export async function ensureGamesDirectory(): Promise<void> {
 export async function appendGameEvent(gameGuid: string, event: GameEvent): Promise<void> {
   await ensureGamesDirectory()
   await appendFile(getGameJsonlPath(gameGuid), `${JSON.stringify(event)}\n`, 'utf8')
+}
+
+export async function readGameEvents(gameGuid: string): Promise<GameEvent[]> {
+  const raw = await readFile(getGameJsonlPath(gameGuid), 'utf8')
+
+  return raw
+    .split('\n')
+    .filter(Boolean)
+    .map(line => JSON.parse(line) as GameEvent)
+}
+
+export function getGameLockPath(gameGuid: string): string {
+  return path.join(getGamesDirectory(), `${gameGuid}.lock`)
 }
