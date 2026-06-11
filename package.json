@@ -4,20 +4,28 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "game:start": "tsx src/scripts/start.ts"
+    "game:start": "tsx src/scripts/start.ts",
+    "storybook": "tsx src/scripts/storybook.ts"
   },
   "dependencies": {
     "@node-cli/logger": "catalog:",
-    "chess.js": "catalog:"
+    "chess.js": "catalog:",
+    "ink": "catalog:",
+    "react": "catalog:",
+    "react-devtools-core": "catalog:"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
     "@tsconfig/strictest": "catalog:",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-formatter-pretty": "catalog:",
+    "eslint-plugin-import": "catalog:",
     "eslint-plugin-prettier": "catalog:",
+    "eslint-plugin-react": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
     "eslint-plugin-simple-import-sort": "catalog:",
     "globals": "catalog:",
     "prettier": "catalog:",
