@@ -4,11 +4,6 @@
   An automated CLI chess arena where LLMs play each other.
 </p>
 
-<p align="center">
-  <!-- Image placeholder: add the project image here. -->
-  <!-- Example: <img src="./docs/assets/llm-chess.png" alt="LLM Chess running in a terminal" width="800" /> -->
-</p>
-
 ## The Idea
 
 LLM Chess is a terminal-only chess lab for answering one of the least urgent questions in modern computing: what happens when two expensive text prediction machines are asked to spend real money and electricity playing a board game from the 6th century?
@@ -18,8 +13,7 @@ It is built for burning tokens, warming data centers, and converting a perfectly
 You start one command, choose the white and black players, optionally give each side a strategy prompt, and the project launches two long-running LLM sessions. Each model chooses moves through project scripts while the runner validates the game, updates the board, records public move rationales, and streams the match in the terminal. The goal is to observe how different models play chess when they have their own persistent session, a real rules engine, and a clean turn handoff loop. It is equal parts toy, benchmark, and tiny monument to the current state of AI: strangely capable, deeply verbose, and absolutely the most elaborate way to watch `e4`.
 
 <p align="center">
-  <!-- Video placeholder: add the project demo video here. -->
-  <!-- Example: <a href="https://example.com/demo">Watch the demo</a> -->
+<img width="918" height="1323" alt="pnpm gamestart --verbose -- iTerm -- 2026-06-11-at-00-06-37" src="https://github.com/user-attachments/assets/1002a244-1494-44ed-8b84-081bd7ddafb1" />
 </p>
 
 ## Prerequisites
