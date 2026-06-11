@@ -4,7 +4,7 @@ LLM Chess is an automated chess arena where two LLM-backed agents play chess aga
 
 ## Purpose
 
-The project exists to run model-vs-model chess games with as little human intervention as possible. A user starts a game, two model-backed players are launched, and the game proceeds through scripted turn coordination.
+The project exists to run model-vs-model chess games with as little human intervention as possible. A user starts a game, chooses the two players, and the game proceeds through scripted turn coordination.
 
 Example matchup:
 
@@ -14,11 +14,15 @@ Example matchup:
 
 The project should feel like a small automated chess lab for observing and comparing model play. Games should be easy to start, visible while they run, and inspectable after they finish.
 
-The first version is text-first. The board should be represented in terminal-friendly form rather than through a graphical UI.
+LLM Chess is terminal-only. The main experience is a CLI game manager, and a GUI is not part of the product direction.
+
+The start flow asks for white and black player configuration. Provider options are based on installed local CLIs, and model options come from the project's supported model list. The user can also provide optional strategy guidance for each player before the game starts.
 
 ## Terminal UI
 
 The project uses a terminal UI for game display. The board should feel like a real chess board while staying readable in a command-line environment.
+
+The running game view shows a move feed, player metadata, captured pieces, status badges, and the current board. Move rationales are public summaries intended for observation, not hidden chain-of-thought.
 
 Component previews are available through a local storybook script so UI pieces can be checked independently from the game runner.
 
@@ -28,9 +32,13 @@ Each player is a long-lived LLM session. The model should keep its own conversat
 
 The model is responsible for choosing a move when it is its turn. Project scripts are responsible for the mechanics around turns, validation, state updates, waiting, and handoff.
 
+Players submit human-readable move text and a concise public rationale. They do not write game records directly.
+
+Resignation is not currently part of the game protocol.
+
 ## Game Records
 
-Each game should have a dedicated record of what happened. The record should be sufficient to inspect the game after the fact and understand the sequence of moves and board states.
+Each game has a dedicated record of what happened. The record is sufficient to inspect the game after the fact and understand the sequence of moves, board states, public rationales, timing, and final result.
 
 Runtime logs are separate from game state. Logs explain what the runner did; game records explain what happened in the game.
 
@@ -43,13 +51,17 @@ The workspace contains a TypeScript project scaffold and a validated game sessio
 - TypeScript, ESLint, and Prettier configuration.
 - VS Code workspace recommendations and settings.
 - `pnpm game:start` to launch a chess game session.
+- `pnpm game:move` and `pnpm game:wait` for LLM turn coordination.
 - `pnpm storybook` to preview terminal UI components.
 - Runtime output in `.games/<guid>.jsonl` and `.games/<guid>.log`.
 - Initial chess game state creation using `chess.js`.
 - A chessboard component that renders from `chess.js` board state.
-- Player provider and model selection when starting a game.
+- Player provider, model, and optional strategy selection when starting a game.
+- Local dependency checks for tmux and supported provider CLIs.
 - Static model option lists for supported CLIs.
 - Chess move submission and turn waiting through project scripts.
 - Move validation, replay, and basic match completion detection through `chess.js`.
 - Public move rationales recorded with validated moves.
 - Explicit game-end records with result and resolution reason.
+- Game-end cleanup for player sessions.
+- A repeatable command printed after a completed game.

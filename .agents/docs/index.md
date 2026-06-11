@@ -2,10 +2,12 @@
 
 This directory contains high-level project context and current architecture documentation.
 
+Committed docs should describe durable project decisions and the current shape of the system. Keep detailed experiments, temporary notes, and brainstorming in the ignored scratchpad.
+
 ## Documents
 
-- [Project](./project.md): product brief and current project state.
-- [Architecture](./architecture.md): runner, tmux, turn coordination, and game record decisions.
+- [Project](./project.md): product brief, current product shape, and supported workflows.
+- [Architecture](./architecture.md): runner, tmux sessions, turn coordination, records, and terminal UI decisions.
 
 ## Documentation Instructions
 
