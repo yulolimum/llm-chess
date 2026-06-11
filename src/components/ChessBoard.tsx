@@ -101,25 +101,33 @@ function MoveFeed({ entries }: { entries: readonly MoveFeedEntry[] }) {
     return null
   }
 
+  const moveNumberWidth = getMoveNumberWidth(entries)
+
   return (
     <Box borderStyle="single" flexDirection="column" paddingX={1} width={boardWidth}>
       {entries.map((entry, index) => (
-        <MoveFeedEntryView entry={entry} key={index} />
+        <MoveFeedEntryView entry={entry} key={index} moveNumberWidth={moveNumberWidth} />
       ))}
     </Box>
   )
 }
 
-function MoveFeedEntryView({ entry }: { entry: MoveFeedEntry }) {
+function MoveFeedEntryView({ entry, moveNumberWidth }: { entry: MoveFeedEntry; moveNumberWidth: number }) {
   if (entry.type === 'move') {
     return (
-      <Box flexWrap="wrap">
-        <Text>{formatMovePrefix(entry)}</Text>
-        <Text bold>{entry.color === 'w' ? 'White' : 'Black'}</Text>
-        <Text> - </Text>
-        <Text color="#facc15">[{entry.move}]</Text>
-        {entry.duration === undefined ? null : <Text> - {entry.duration}</Text>}
-        {entry.rationale === undefined ? null : <Text> - {entry.rationale}</Text>}
+      <Box flexDirection="column">
+        <Box>
+          <Text>{formatMovePrefix(entry, moveNumberWidth)}</Text>
+          <Text bold>{entry.color === 'w' ? 'White' : 'Black'}</Text>
+          <Text> - </Text>
+          <Text color="#facc15">[{entry.move}]</Text>
+          {entry.duration === undefined ? null : <Text> - {entry.duration}</Text>}
+        </Box>
+        {entry.rationale === undefined ? null : (
+          <Box paddingLeft={getMovePrefixWidth(moveNumberWidth)}>
+            <Text wrap="wrap">{entry.rationale}</Text>
+          </Box>
+        )}
       </Box>
     )
   }
@@ -127,10 +135,24 @@ function MoveFeedEntryView({ entry }: { entry: MoveFeedEntry }) {
   return <Text>{entry.text}</Text>
 }
 
-function formatMovePrefix(entry: MoveFeedEntry): string {
-  const moveNumber = String(entry.moveNumber)
+function getMoveNumberWidth(entries: readonly MoveFeedEntry[]): number {
+  return entries.reduce((width, entry) => {
+    if (entry.type !== 'move' || entry.moveNumber === undefined) {
+      return width
+    }
+
+    return Math.max(width, String(entry.moveNumber).length)
+  }, 1)
+}
+
+function formatMovePrefix(entry: MoveFeedEntry, moveNumberWidth: number): string {
+  const moveNumber = String(entry.moveNumber).padStart(moveNumberWidth, ' ')
 
   return entry.color === 'w' ? `${moveNumber}.   ` : `${moveNumber}... `
+}
+
+function getMovePrefixWidth(moveNumberWidth: number): number {
+  return moveNumberWidth + 4
 }
 
 function PlayerInfo({ player }: { player: ChessBoardPlayer }) {
