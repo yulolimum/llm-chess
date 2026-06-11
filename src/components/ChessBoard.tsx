@@ -79,7 +79,7 @@ export function ChessBoard({
   whitePlayer?: ChessBoardPlayer
 }) {
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" padding={1}>
       <MoveFeed entries={moveFeed} />
       {blackPlayer === undefined ? null : <PlayerInfo player={blackPlayer} />}
       <Box flexDirection="column">
