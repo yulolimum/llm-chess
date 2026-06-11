@@ -32,6 +32,26 @@ const components = {
           provider: 'Claude',
         },
         board: new Chess().board(),
+        moveFeed: [
+          {
+            text: 'Game started',
+            type: 'game-started',
+          },
+          {
+            color: 'w',
+            move: 'e4',
+            moveNumber: 1,
+            rationale: 'Controls the center and opens lines for the bishop and queen.',
+            type: 'move',
+          },
+          {
+            color: 'b',
+            move: 'c5',
+            moveNumber: 1,
+            rationale: 'Challenges the center from the flank and keeps the position unbalanced.',
+            type: 'move',
+          },
+        ],
         whitePlayer: {
           capturedPieces: [
             { color: 'b', type: 'q' },

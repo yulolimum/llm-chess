@@ -1,4 +1,4 @@
-import type { CapturedPiece, ChessBoardPlayer, PlayerStatus } from '../components/ChessBoard.js'
+import type { CapturedPiece, ChessBoardPlayer, MoveFeedEntry, PlayerStatus } from '../components/ChessBoard.js'
 import type { GameState } from '../game/state.js'
 import type { Color, PieceSymbol } from 'chess.js'
 
@@ -358,6 +358,7 @@ async function streamBoardState(gameGuid: string): Promise<void> {
       const board = React.createElement(ChessBoard, {
         blackPlayer: createChessBoardPlayer(blackPlayer, createPlayerStatus('b', state), capturedPieces.black),
         board: state.chess.board(),
+        moveFeed: createMoveFeed(state),
         whitePlayer: createChessBoardPlayer(whitePlayer, createPlayerStatus('w', state), capturedPieces.white),
       })
 
@@ -505,4 +506,42 @@ function collectCapturedPieces(state: GameState): CapturedPiecesByPlayer {
 
 function compareCapturedPieces(a: CapturedPiece, b: CapturedPiece): number {
   return capturedPieceOrder[a.type] - capturedPieceOrder[b.type]
+}
+
+function createMoveFeed(state: GameState): MoveFeedEntry[] {
+  const entries: MoveFeedEntry[] = [
+    {
+      text: 'Game started',
+      type: 'game-started',
+    },
+  ]
+
+  let ply = 0
+
+  for (const event of state.events) {
+    if (event.type === 'move') {
+      ply += 1
+      const entry: MoveFeedEntry = {
+        color: event.move.color,
+        move: event.move.san,
+        moveNumber: Math.ceil(ply / 2),
+        type: 'move',
+      }
+
+      if (event.rationale !== undefined) {
+        entry.rationale = event.rationale
+      }
+
+      entries.push(entry)
+    }
+
+    if (event.type === 'game_ended') {
+      entries.push({
+        text: `Game ended: ${event.result} by ${event.reason}`,
+        type: 'game-ended',
+      })
+    }
+  }
+
+  return entries
 }

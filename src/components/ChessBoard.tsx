@@ -16,6 +16,15 @@ export type ChessBoardPlayer = {
   status?: PlayerStatus
 }
 
+export type MoveFeedEntry = {
+  color?: Color
+  move?: string
+  moveNumber?: number
+  rationale?: string
+  text?: string
+  type: 'game-ended' | 'game-started' | 'move'
+}
+
 export type CapturedPiece = {
   color: Color
   type: PieceSymbol
@@ -60,14 +69,17 @@ const statusDisplay = {
 export function ChessBoard({
   blackPlayer,
   board,
+  moveFeed = [],
   whitePlayer,
 }: {
   blackPlayer?: ChessBoardPlayer
   board: Board
+  moveFeed?: readonly MoveFeedEntry[]
   whitePlayer?: ChessBoardPlayer
 }) {
   return (
     <Box flexDirection="column">
+      <MoveFeed entries={moveFeed} />
       {blackPlayer === undefined ? null : <PlayerInfo player={blackPlayer} />}
       <Box flexDirection="column">
         {board.map((rank, rankIndex) => (
@@ -81,6 +93,42 @@ export function ChessBoard({
       {whitePlayer === undefined ? null : <PlayerInfo player={whitePlayer} />}
     </Box>
   )
+}
+
+function MoveFeed({ entries }: { entries: readonly MoveFeedEntry[] }) {
+  if (entries.length === 0) {
+    return null
+  }
+
+  return (
+    <Box borderStyle="single" flexDirection="column" paddingX={1} width={boardWidth}>
+      {entries.map((entry, index) => (
+        <MoveFeedEntryView entry={entry} key={index} />
+      ))}
+    </Box>
+  )
+}
+
+function MoveFeedEntryView({ entry }: { entry: MoveFeedEntry }) {
+  if (entry.type === 'move') {
+    return (
+      <Box flexWrap="wrap">
+        <Text>{formatMovePrefix(entry)}</Text>
+        <Text bold>{entry.color === 'w' ? 'White' : 'Black'}</Text>
+        <Text> - </Text>
+        <Text color="#facc15">[{entry.move}]</Text>
+        {entry.rationale === undefined ? null : <Text> - {entry.rationale}</Text>}
+      </Box>
+    )
+  }
+
+  return <Text>{entry.text}</Text>
+}
+
+function formatMovePrefix(entry: MoveFeedEntry): string {
+  const moveNumber = String(entry.moveNumber)
+
+  return entry.color === 'w' ? `${moveNumber}.   ` : `${moveNumber}... `
 }
 
 function PlayerInfo({ player }: { player: ChessBoardPlayer }) {
