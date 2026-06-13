@@ -14,6 +14,8 @@ The runner is the only user-facing entry point for a normal game. It asks for wh
 
 Completed games can be inspected with `pnpm game:replay`. The replay command scans `.games` for completed JSONL records, asks the user to choose a game and playback speed, then renders the recorded positions in the terminal.
 
+Completed games can be exported with `pnpm game:export`. The export command scans completed records with the same selection pattern and prints PGN to the terminal.
+
 ## Player Sessions
 
 Each player runs in its own tmux session. The sessions are named from the game id:
@@ -69,6 +71,8 @@ Game records include the starting position, validated moves, public rationales, 
 
 The start event includes player metadata: provider, model, and strategy text. This keeps completed records self-describing for replay and later inspection.
 
+PGN export rebuilds the game through `chess.js` from the recorded moves, sets standard PGN headers, and prints the generated PGN.
+
 Player scripts keep their terminal output focused on turn coordination. Detailed diagnostics are written to the game log.
 
 Move duration in the UI is derived from game event timestamps.
@@ -93,4 +97,4 @@ The coordination approach has been validated. The non-chess validation code has 
 
 The repository has a terminal-rendered chessboard backed by `chess.js` board state.
 
-The repository has chess-specific move submission, move validation, turn waiting, completed game replay, match completion detection, explicit game-end records, provider availability checks, player strategy prompts, public move rationales, player metadata in game records, and terminal UI previews.
+The repository has chess-specific move submission, move validation, turn waiting, completed game replay, completed game PGN export, match completion detection, explicit game-end records, provider availability checks, player strategy prompts, public move rationales, player metadata in game records, and terminal UI previews.

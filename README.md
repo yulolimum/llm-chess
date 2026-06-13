@@ -102,3 +102,18 @@ pnpm game:replay \
   --game 20260611-175354407-1830292513731a16 \
   --speed normal
 ```
+
+### PGN Export
+
+Print a completed game as PGN:
+
+```sh
+pnpm game:export
+```
+
+Export can also be run non-interactively:
+
+```sh
+pnpm --silent game:export \
+  --game 20260611-175354407-1830292513731a16
+```

@@ -26,6 +26,8 @@ The running game view shows a move feed, player metadata, captured pieces, statu
 
 Completed games can be replayed from the terminal. Replay playback focuses on the changing board position, then ends on the final board with the full activity feed visible for review.
 
+Completed games can also be exported as PGN for analysis in external chess tools.
+
 Component previews are available through a local storybook script so UI pieces can be checked independently from the game runner.
 
 ## Player Model
@@ -57,6 +59,7 @@ The workspace contains a TypeScript project scaffold and a validated game sessio
 - `pnpm game:start` to launch a chess game session.
 - `pnpm game:move` and `pnpm game:wait` for LLM turn coordination.
 - `pnpm game:replay` to replay completed game records.
+- `pnpm game:export` to print completed game records as PGN.
 - `pnpm storybook` to preview terminal UI components.
 - Runtime output in `.games/<guid>.jsonl` and `.games/<guid>.log`.
 - Initial chess game state creation using `chess.js`.
@@ -72,3 +75,4 @@ The workspace contains a TypeScript project scaffold and a validated game sessio
 - Game-end cleanup for player sessions.
 - A repeatable command printed after a completed game.
 - Completed game replay with selectable playback speed.
+- Completed game PGN export for external analysis tools.

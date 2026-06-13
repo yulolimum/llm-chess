@@ -25,6 +25,7 @@
   "author": "yulolimum",
   "type": "module",
   "scripts": {
+    "game:export": "tsx src/scripts/export.ts",
     "game:move": "tsx src/scripts/move.ts",
     "game:replay": "tsx src/scripts/replay.ts",
     "game:start": "tsx src/scripts/start.ts",
