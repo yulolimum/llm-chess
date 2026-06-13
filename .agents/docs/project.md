@@ -22,7 +22,7 @@ The start flow asks for white and black player configuration. Provider options a
 
 The project uses a terminal UI for game display. The board should feel like a real chess board while staying readable in a command-line environment.
 
-The running game view shows a move feed, player metadata, captured pieces, status badges, and the current board. Move rationales are public summaries intended for observation, not hidden chain-of-thought.
+The running game view shows a move feed, player metadata, player strategy guidance when present, captured pieces, status badges, and the current board. Move rationales are public summaries intended for observation, not hidden chain-of-thought.
 
 Completed games can be replayed from the terminal. Replay playback focuses on the changing board position, then ends on the final board with the full activity feed visible for review.
 

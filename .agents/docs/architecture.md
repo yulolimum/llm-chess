@@ -85,7 +85,7 @@ LLM Chess is a CLI product. UI architecture should stay focused on terminal rend
 
 The chessboard reads board state from `chess.js`. UI components should not maintain a separate chess position model when the engine already provides the board state.
 
-The main game view shows the full move feed, white and black player metadata, captured pieces, player status, and the current board. The move feed is meant to make the match understandable while it is running, not only after inspecting files.
+The main game view shows the full move feed, white and black player metadata, player strategy guidance when present, captured pieces, player status, and the current board. The move feed is meant to make the match understandable while it is running, not only after inspecting files.
 
 Replay uses the same board component as the live game view. During playback, it hides the move feed so the changing position is the focus. The final replay frame shows the full feed alongside the completed board.
 

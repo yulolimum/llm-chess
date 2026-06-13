@@ -14,6 +14,7 @@ export type ChessBoardPlayer = {
   model: string
   provider: string
   status?: PlayerStatus
+  strategy?: string
 }
 
 export type MoveFeedEntry = {
@@ -159,20 +160,28 @@ function getMovePrefixWidth(moveNumberWidth: number): number {
 
 function PlayerInfo({ player }: { player: ChessBoardPlayer }) {
   return (
-    <Box justifyContent="space-between" paddingY={1} width={boardWidth}>
-      <Box>
-        <Text bold>{player.provider}</Text>
-        <Text> - {player.model}</Text>
-        {player.status === undefined ? null : (
-          <>
-            <Text> - </Text>
-            <Text backgroundColor={statusDisplay[player.status].backgroundColor} color="#ffffff">
-              {statusDisplay[player.status].label}
-            </Text>
-          </>
-        )}
+    <Box flexDirection="column" paddingY={1} width={boardWidth}>
+      <Box justifyContent="space-between" width={boardWidth}>
+        <Box flexShrink={1}>
+          <Text bold>{player.provider}</Text>
+          <Text> - {player.model}</Text>
+          {player.status === undefined ? null : (
+            <>
+              <Text> - </Text>
+              <Text backgroundColor={statusDisplay[player.status].backgroundColor} color="#ffffff">
+                {statusDisplay[player.status].label}
+              </Text>
+            </>
+          )}
+        </Box>
+        <CapturedPieces pieces={player.capturedPieces ?? []} />
       </Box>
-      <CapturedPieces pieces={player.capturedPieces ?? []} />
+      {player.strategy === undefined ? null : (
+        <Box width={boardWidth}>
+          <Text bold>Strategy:</Text>
+          <Text wrap="wrap"> {player.strategy}</Text>
+        </Box>
+      )}
     </Box>
   )
 }
