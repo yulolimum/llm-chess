@@ -131,11 +131,16 @@ function createChessBoardPlayer(
 ): ChessBoardPlayer {
   const provider = player === undefined ? colorToFallbackPlayerName(color) : getProviderLabel(player.provider)
   const model = player === undefined ? 'Unknown player' : getModelLabel(player.provider, player.model)
+  const strategy = player?.strategy.trim()
   const status = createPlayerStatus(color, state)
-  const displayPlayer = {
+  const displayPlayer: ChessBoardPlayer = {
     capturedPieces,
     model,
     provider,
+  }
+
+  if (strategy !== undefined && strategy.length > 0) {
+    displayPlayer.strategy = strategy
   }
 
   if (status === undefined) {
