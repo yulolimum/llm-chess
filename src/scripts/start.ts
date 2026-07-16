@@ -120,6 +120,7 @@ Options:
 }
 
 await assertTmuxInstalled()
+await assertStockfishInstalled()
 const installedProviders = await detectInstalledProviders()
 assertAnyProviderInstalled(installedProviders)
 
@@ -289,6 +290,16 @@ async function assertTmuxInstalled(): Promise<void> {
   if (result.exitCode !== 0) {
     print('tmux is required to start a game.')
     print('Install it with: brew install tmux')
+    process.exit(1)
+  }
+}
+
+async function assertStockfishInstalled(): Promise<void> {
+  const result = await quiet(nothrow($`command -v stockfish`))
+
+  if (result.exitCode !== 0) {
+    print('Stockfish is required to start a game.')
+    print('Install it with: brew install stockfish')
     process.exit(1)
   }
 }

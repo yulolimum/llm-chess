@@ -8,6 +8,7 @@ import { formatGameState, formatGameStatus } from '../game/format.js'
 import { withGameLock } from '../game/lock.js'
 import { colorToPlayerName, parsePlayerName, playerNameToColor } from '../game/players.js'
 import { readGameState } from '../game/state.js'
+import { analyzeMoveWithStockfish } from '../game/stockfish.js'
 import { createLogger, setSessionLogFile } from '../utils/create-logger.js'
 
 const scriptCommand = 'pnpm game:move'
@@ -85,7 +86,12 @@ const exitCode = await withGameLock(gameGuid, async () => {
     return 1
   }
 
-  const moveEvent = createMoveEvent(move, { rationale })
+  const analysis = await analyzeMoveWithStockfish({
+    fen: move.before,
+    playedMove: move.lan,
+    turn: move.color,
+  })
+  const moveEvent = createMoveEvent(move, { analysis, rationale })
 
   logger.debug('accepted move event:', moveEvent)
   await appendGameEvent(gameGuid, moveEvent)
