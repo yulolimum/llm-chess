@@ -2,6 +2,8 @@ if (process.env['NO_COLOR'] === undefined) {
   process.env['FORCE_COLOR'] ||= '1'
 }
 
+import type { MoveFeedAnalysis, MoveFeedEntry } from '../components/ChessBoard.js'
+
 import select from '@inquirer/select'
 import { Chess } from 'chess.js'
 import { render } from 'ink'
@@ -17,7 +19,33 @@ import { ChessBoard } from '../components/ChessBoard.js'
 //
 const scriptName = 'storybook'
 const scriptCommand = 'pnpm dev:storybook'
-const chessboardMoveFeed = [
+const sampleMoveAnalyses = [
+  {
+    classification: 'best',
+    eval: { type: 'cp', value: 47 },
+  },
+  {
+    classification: 'excellent',
+    eval: { type: 'cp', value: 34 },
+  },
+  {
+    classification: 'good',
+    eval: { type: 'cp', value: 42 },
+  },
+  {
+    classification: 'inaccuracy',
+    eval: { type: 'cp', value: 88 },
+  },
+  {
+    classification: 'mistake',
+    eval: { type: 'cp', value: -115 },
+  },
+  {
+    classification: 'blunder',
+    eval: { type: 'cp', value: -320 },
+  },
+] as const satisfies readonly MoveFeedAnalysis[]
+const chessboardMoveFeed = withSampleAnalysis([
   {
     text: 'Game started',
     type: 'game-started',
@@ -311,7 +339,36 @@ const chessboardMoveFeed = [
       'Bringing the rook behind the passed d-pawn to over-protect it and support its eventual advance, keeping a firm grip while up a piece and a pawn.',
     type: 'move',
   },
-] as const
+] as const satisfies readonly MoveFeedEntry[])
+
+function withSampleAnalysis(entries: readonly MoveFeedEntry[]): MoveFeedEntry[] {
+  let moveIndex = 0
+
+  return entries.map(entry => {
+    if (entry.type !== 'move') {
+      return entry
+    }
+
+    const analysis = getSampleAnalysis(moveIndex)
+    moveIndex += 1
+
+    return {
+      ...entry,
+      analysis,
+    }
+  })
+}
+
+function getSampleAnalysis(index: number): MoveFeedAnalysis {
+  const analysis = sampleMoveAnalyses[index % sampleMoveAnalyses.length]
+
+  if (analysis === undefined) {
+    throw new Error('Expected at least one sample move analysis')
+  }
+
+  return analysis
+}
+
 const components = {
   chessboard: {
     name: 'ChessBoard',

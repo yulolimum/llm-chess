@@ -1,3 +1,4 @@
+import type { EngineScore, MoveQuality } from '../game/types.js'
 import type { Chess, Color, PieceSymbol } from 'chess.js'
 
 import { Box, Text } from 'ink'
@@ -18,6 +19,7 @@ export type ChessBoardPlayer = {
 }
 
 export type MoveFeedEntry = {
+  analysis?: MoveFeedAnalysis
   color?: Color
   duration?: string
   move?: string
@@ -25,6 +27,11 @@ export type MoveFeedEntry = {
   rationale?: string
   text?: string
   type: 'game-ended' | 'game-started' | 'move'
+}
+
+export type MoveFeedAnalysis = {
+  classification: MoveQuality
+  eval: EngineScore
 }
 
 export type CapturedPiece = {
@@ -67,6 +74,43 @@ const statusDisplay = {
     label: ' WON ',
   },
 } as const satisfies Record<PlayerStatus, { backgroundColor: string; label: string }>
+const moveQualityDisplay = {
+  best: {
+    backgroundColor: '#4ade80',
+    color: '#000000',
+    label: 'Best',
+  },
+  blunder: {
+    backgroundColor: '#dc2626',
+    color: '#ffffff',
+    label: 'Blunder',
+  },
+  excellent: {
+    backgroundColor: '#22c55e',
+    color: '#000000',
+    label: 'Excellent',
+  },
+  good: {
+    backgroundColor: '#86a85f',
+    color: '#000000',
+    label: 'Good',
+  },
+  inaccuracy: {
+    backgroundColor: '#facc15',
+    color: '#000000',
+    label: 'Inaccuracy',
+  },
+  mistake: {
+    backgroundColor: '#f97316',
+    color: '#000000',
+    label: 'Mistake',
+  },
+} as const satisfies Record<MoveQuality, { backgroundColor: string; color: string; label: string }>
+const analysisScoreWidth = '-0.00'.length
+const analysisBadgeInnerWidth =
+  Math.max(...Object.values(moveQualityDisplay).map(display => display.label.length)) +
+  ' · '.length +
+  analysisScoreWidth
 
 export function ChessBoard({
   blackPlayer,
@@ -120,8 +164,8 @@ function MoveFeedEntryView({ entry, moveNumberWidth }: { entry: MoveFeedEntry; m
     return (
       <Box flexDirection="column">
         <Box>
-          <Text>{formatMovePrefix(entry, moveNumberWidth)}</Text>
-          <Text bold>{entry.color === 'w' ? 'White' : 'Black'}</Text>
+          <MoveColorBadge entry={entry} moveNumberWidth={moveNumberWidth} />
+          {entry.analysis === undefined ? null : <MoveAnalysisBadge analysis={entry.analysis} />}
           <Text> - </Text>
           <Text color="#facc15">[{entry.move}]</Text>
           {entry.duration === undefined ? null : <Text> - {entry.duration}</Text>}
@@ -136,6 +180,48 @@ function MoveFeedEntryView({ entry, moveNumberWidth }: { entry: MoveFeedEntry; m
   }
 
   return <Text>{entry.text}</Text>
+}
+
+function MoveColorBadge({ entry, moveNumberWidth }: { entry: MoveFeedEntry; moveNumberWidth: number }) {
+  const isWhite = entry.color === 'w'
+
+  return (
+    <Text backgroundColor={isWhite ? lightPiece : darkPiece} color={isWhite ? darkPiece : lightPiece}>
+      {`${formatMovePrefix(entry, moveNumberWidth)}${isWhite ? 'WHITE ' : 'BLACK '}`}
+    </Text>
+  )
+}
+
+function MoveAnalysisBadge({ analysis }: { analysis: MoveFeedAnalysis }) {
+  const display = moveQualityDisplay[analysis.classification]
+
+  return (
+    <>
+      <Text backgroundColor={display.backgroundColor} color={display.color}>
+        {` ${formatAnalysisText(analysis)} `}
+      </Text>
+    </>
+  )
+}
+
+function formatAnalysisText(analysis: MoveFeedAnalysis): string {
+  const display = moveQualityDisplay[analysis.classification]
+  const text = `${display.label} · ${formatEngineScore(analysis.eval)}`
+
+  return text.padEnd(analysisBadgeInnerWidth, ' ')
+}
+
+function formatEngineScore(score: EngineScore): string {
+  if (score.type === 'mate') {
+    return (score.value < 0 ? `-M${Math.abs(score.value)}` : `M${score.value}`).padStart(analysisScoreWidth, ' ')
+  }
+
+  if (score.value === 0) {
+    return '0.00'.padStart(analysisScoreWidth, ' ')
+  }
+
+  const pawns = score.value / 100
+  return `${pawns > 0 ? '+' : ''}${pawns.toFixed(2)}`.padStart(analysisScoreWidth, ' ')
 }
 
 function getMoveNumberWidth(entries: readonly MoveFeedEntry[]): number {

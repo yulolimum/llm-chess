@@ -55,6 +55,13 @@ export function createMoveFeed(state: GameState): MoveFeedEntry[] {
         type: 'move',
       }
 
+      if (event.analysis !== undefined) {
+        entry.analysis = {
+          classification: event.analysis.classification,
+          eval: event.analysis.evalPlayed,
+        }
+      }
+
       if (duration !== undefined) {
         entry.duration = duration
       }
