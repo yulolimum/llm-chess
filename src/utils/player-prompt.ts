@@ -19,8 +19,8 @@ export async function renderPlayerPrompt(options: {
     gameGuid: options.gameGuid,
     initialFen: options.initialFen,
     initialTurn,
-    moveCommand: `pnpm game:move --game ${options.gameGuid} --player ${player} --move "<move>" --rationale "<public rationale>"`,
+    moveCommand: `pnpm agent:move --game ${options.gameGuid} --player ${player} --move "<move>" --rationale "<public rationale>"`,
     strategy,
-    waitCommand: `pnpm game:wait --game ${options.gameGuid} --player ${player}`,
+    waitCommand: `pnpm agent:wait --game ${options.gameGuid} --player ${player}`,
   })
 }

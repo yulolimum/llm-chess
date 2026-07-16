@@ -16,7 +16,7 @@ import { ChessBoard } from '../components/ChessBoard.js'
 // Constants
 //
 const scriptName = 'storybook'
-const scriptCommand = 'pnpm storybook'
+const scriptCommand = 'pnpm dev:storybook'
 const chessboardMoveFeed = [
   {
     text: 'Game started',

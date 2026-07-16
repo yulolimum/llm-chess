@@ -7,7 +7,7 @@ import { colorToPlayerName, parsePlayerName, playerNameToColor } from '../game/p
 import { readGameState } from '../game/state.js'
 import { createLogger, setSessionLogFile } from '../utils/create-logger.js'
 
-const scriptCommand = 'pnpm game:wait'
+const scriptCommand = 'pnpm agent:wait'
 
 const args = minimist(process.argv.slice(2), {
   alias: { h: 'help' },
@@ -36,7 +36,7 @@ const playerColor = playerNameToColor(player)
 setSessionLogFile(getGameLogPath(gameGuid))
 
 const logger = createLogger({
-  prefix: '[game:wait]',
+  prefix: '[agent:wait]',
 })
 
 let pollCount = 0
@@ -85,7 +85,7 @@ while (true) {
     output(formatGameState(state))
     output('')
     output(
-      `Choose a move, then run: pnpm game:move --game ${gameGuid} --player ${player} --move "<move>" --rationale "<public rationale>"`,
+      `Choose a move, then run: pnpm agent:move --game ${gameGuid} --player ${player} --move "<move>" --rationale "<public rationale>"`,
     )
     process.exit(0)
   }

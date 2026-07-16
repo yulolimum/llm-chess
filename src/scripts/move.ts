@@ -11,7 +11,7 @@ import { readGameState } from '../game/state.js'
 import { analyzeMoveWithStockfish } from '../game/stockfish.js'
 import { createLogger, setSessionLogFile } from '../utils/create-logger.js'
 
-const scriptCommand = 'pnpm game:move'
+const scriptCommand = 'pnpm agent:move'
 
 const args = minimist(process.argv.slice(2), {
   alias: { h: 'help' },
@@ -45,7 +45,7 @@ const rationale = requireArg(parsedArgs.rationale, '--rationale <text>')
 setSessionLogFile(getGameLogPath(gameGuid))
 
 const logger = createLogger({
-  prefix: '[game:move]',
+  prefix: '[agent:move]',
 })
 
 logger.debug('parsed args:', parsedArgs)
@@ -73,7 +73,7 @@ const exitCode = await withGameLock(gameGuid, async () => {
   if (state.chess.turn() !== playerColor) {
     output(`It is ${colorToPlayerName(state.chess.turn())}'s turn.`)
     output('')
-    output(`Now run: pnpm game:wait --game ${gameGuid} --player ${player}`)
+    output(`Now run: pnpm agent:wait --game ${gameGuid} --player ${player}`)
     return 1
   }
 
@@ -126,7 +126,7 @@ const exitCode = await withGameLock(gameGuid, async () => {
     output(`Game complete: ${gameEndedEvent.result} by ${gameEndedEvent.reason}. Stop now.`)
   } else {
     output('')
-    output(`Now run: pnpm game:wait --game ${gameGuid} --player ${player}`)
+    output(`Now run: pnpm agent:wait --game ${gameGuid} --player ${player}`)
   }
 
   return 0
