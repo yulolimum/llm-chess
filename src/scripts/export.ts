@@ -11,7 +11,7 @@ import process from 'node:process'
 import { fs, minimist } from 'zx'
 
 import { ensureGamesDirectory, getGamesDirectory, readGameEvents } from '../game/files.js'
-import { getModelLabel, getProviderLabel } from '../game/providers.js'
+import { getEffortLabel, getModelLabel, getProviderLabel } from '../game/providers.js'
 import { replayGameEvents } from '../game/state.js'
 
 //
@@ -254,7 +254,9 @@ function formatPlayerLabel(player: GameStartedPlayer | undefined, fallback: stri
     return fallback
   }
 
-  return `${getProviderLabel(player.provider)} ${getModelLabel(player.provider, player.model)}`
+  const effort = player.effort === undefined ? '' : ` ${getEffortLabel(player.effort)}`
+
+  return `${getProviderLabel(player.provider)} ${getModelLabel(player.provider, player.model)}${effort}`
 }
 
 function formatPgnDate(timestamp: string): string {

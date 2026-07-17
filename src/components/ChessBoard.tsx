@@ -12,6 +12,7 @@ export type PlayerStatus = 'draw' | 'lost' | 'on-move' | 'won'
 
 export type ChessBoardPlayer = {
   capturedPieces?: readonly CapturedPiece[]
+  effort?: string
   model: string
   provider: string
   status?: PlayerStatus
@@ -251,6 +252,7 @@ function PlayerInfo({ player }: { player: ChessBoardPlayer }) {
         <Box flexShrink={1}>
           <Text bold>{player.provider}</Text>
           <Text> - {player.model}</Text>
+          {player.effort === undefined ? null : <Text> - {player.effort}</Text>}
           {player.status === undefined ? null : (
             <>
               <Text> - </Text>

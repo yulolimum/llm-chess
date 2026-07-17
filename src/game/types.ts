@@ -17,6 +17,7 @@ export type GameStartedEvent = {
 }
 
 export type GameStartedPlayer = {
+  effort?: string
   model: string
   provider: string
   strategy: string

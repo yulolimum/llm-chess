@@ -5,7 +5,7 @@ import type { PieceSymbol } from 'chess.js'
 
 import prettyMilliseconds from 'pretty-ms'
 
-import { getModelLabel, getProviderLabel } from './providers.js'
+import { getEffortLabel, getModelLabel, getProviderLabel } from './providers.js'
 
 type CapturedPiecesByPlayer = {
   black: CapturedPiece[]
@@ -138,12 +138,17 @@ function createChessBoardPlayer(
 ): ChessBoardPlayer {
   const provider = player === undefined ? colorToFallbackPlayerName(color) : getProviderLabel(player.provider)
   const model = player === undefined ? 'Unknown player' : getModelLabel(player.provider, player.model)
+  const effort = player?.effort === undefined ? undefined : getEffortLabel(player.effort)
   const strategy = player?.strategy.trim()
   const status = createPlayerStatus(color, state)
   const displayPlayer: ChessBoardPlayer = {
     capturedPieces,
     model,
     provider,
+  }
+
+  if (effort !== undefined) {
+    displayPlayer.effort = effort
   }
 
   if (strategy !== undefined && strategy.length > 0) {

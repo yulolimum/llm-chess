@@ -1,4 +1,4 @@
-import type { PlayerConfig, Provider, ProviderOption } from '../game/providers.js'
+import type { EffortLevel, PlayerConfig, Provider, ProviderOption } from '../game/providers.js'
 
 import input from '@inquirer/input'
 import select from '@inquirer/select'
@@ -16,7 +16,10 @@ import { appendGameEvent, ensureGamesDirectory, getGameJsonlPath, getGameLogPath
 import { colorToPlayerName } from '../game/players.js'
 import { createBoardPlayers, createMoveFeed } from '../game/presentation.js'
 import {
+  getEffortOptions,
+  getModelOption,
   getProviderLabel,
+  isEffortLevel,
   isProvider,
   modelOptionsByProvider,
   providerCommandByProvider,
@@ -41,14 +44,25 @@ type InstalledProviders = Record<Provider, boolean>
 const args = minimist(process.argv.slice(2), {
   alias: { h: 'help' },
   boolean: ['help'],
-  string: ['blackModel', 'blackProvider', 'blackStrategy', 'whiteModel', 'whiteProvider', 'whiteStrategy'],
+  string: [
+    'blackEffort',
+    'blackModel',
+    'blackProvider',
+    'blackStrategy',
+    'whiteEffort',
+    'whiteModel',
+    'whiteProvider',
+    'whiteStrategy',
+  ],
 })
 
 const parsedArgs = {
+  blackEffort: readStringArg(args['blackEffort']),
   blackModel: readStringArg(args['blackModel']),
   blackProvider: parseProvider(args['blackProvider']),
   blackStrategy: readStringArg(args['blackStrategy']),
   help: Boolean(args['help']),
+  whiteEffort: readStringArg(args['whiteEffort']),
   whiteModel: readStringArg(args['whiteModel']),
   whiteProvider: parseProvider(args['whiteProvider']),
   whiteStrategy: readStringArg(args['whiteStrategy']),
@@ -57,6 +71,7 @@ const parsedArgs = {
 type ArgNames = keyof typeof parsedArgs
 type Args = { [K in ArgNames]: NonNullable<(typeof parsedArgs)[K]> }
 type PlayerConfigFields = {
+  effort: 'blackEffort' | 'whiteEffort'
   model: 'blackModel' | 'whiteModel'
   provider: 'blackProvider' | 'whiteProvider'
   strategy: 'blackStrategy' | 'whiteStrategy'
@@ -110,9 +125,11 @@ if (parsedArgs.help) {
 Options:
   --whiteProvider <provider>   Provider for white: claude, codex
   --whiteModel <model>         Model for white
+  --whiteEffort <effort>       Effort for white when supported by the selected model
   --whiteStrategy <text>       Optional strategy guidance for white
   --blackProvider <provider>   Provider for black: claude, codex
   --blackModel <model>         Model for black
+  --blackEffort <effort>       Effort for black when supported by the selected model
   --blackStrategy <text>       Optional strategy guidance for black
   --help, -h          Show help.
 `)
@@ -127,11 +144,13 @@ assertAnyProviderInstalled(installedProviders)
 const whitePlayer = await selectPlayerConfig(
   'White',
   {
+    effort: 'whiteEffort',
     model: 'whiteModel',
     provider: 'whiteProvider',
     strategy: 'whiteStrategy',
   },
   {
+    effort: parsedArgs.whiteEffort,
     model: parsedArgs.whiteModel,
     provider: parsedArgs.whiteProvider,
     strategy: parsedArgs.whiteStrategy,
@@ -140,11 +159,13 @@ const whitePlayer = await selectPlayerConfig(
 const blackPlayer = await selectPlayerConfig(
   'Black',
   {
+    effort: 'blackEffort',
     model: 'blackModel',
     provider: 'blackProvider',
     strategy: 'blackStrategy',
   },
   {
+    effort: parsedArgs.blackEffort,
     model: parsedArgs.blackModel,
     provider: parsedArgs.blackProvider,
     strategy: parsedArgs.blackStrategy,
@@ -372,6 +393,7 @@ async function selectPlayerConfig(
   label: string,
   fields: PlayerConfigFields,
   defaults: {
+    effort: string | undefined
     model: string | undefined
     provider: Provider | undefined
     strategy: string | undefined
@@ -399,6 +421,20 @@ async function selectPlayerConfig(
   cache.args[fields.model] = model
   await writeCache(cache)
 
+  const effort =
+    defaults.effort ?? (await selectEffort(label, provider, model, readCachedEffort(fields.effort, provider, model)))
+
+  validateEffort(provider, model, effort)
+  recordArg(fields.effort, effort)
+
+  if (effort === undefined) {
+    delete cache.args[fields.effort]
+  } else {
+    cache.args[fields.effort] = effort
+  }
+
+  await writeCache(cache)
+
   const strategy = defaults.strategy ?? (await selectStrategy(label, readCachedStrategy(fields.strategy)))
 
   recordArg(fields.strategy, strategy)
@@ -412,6 +448,7 @@ async function selectPlayerConfig(
   await writeCache(cache)
 
   return {
+    effort,
     model,
     provider,
     strategy,
@@ -432,6 +469,27 @@ async function selectModel(
   })
 }
 
+async function selectEffort(
+  label: string,
+  provider: Provider,
+  model: string,
+  defaultEffort: EffortLevel | undefined,
+): Promise<EffortLevel | undefined> {
+  const efforts = getEffortOptions(provider, model)
+
+  if (efforts.length === 0) {
+    return undefined
+  }
+
+  const modelOption = getModelOption(provider, model)
+
+  return select<EffortLevel>({
+    choices: efforts.map(effort => ({ name: effort.label, value: effort.value })),
+    default: defaultEffort ?? modelOption?.defaultEffort ?? efforts[0]?.value,
+    message: `${label} effort?`,
+  })
+}
+
 async function selectStrategy(label: string, defaultStrategy: string | undefined): Promise<string | undefined> {
   const strategy = await input({
     default: defaultStrategy ?? '',
@@ -447,19 +505,34 @@ function createProviderCommand(player: PlayerConfig, cwd: string): string {
       'codex',
       `--cd ${quote(cwd)}`,
       `--model ${quote(player.model)}`,
+      ...(player.effort === undefined ? [] : [`-c ${quote(`model_reasoning_effort="${player.effort}"`)}`]),
       '--sandbox danger-full-access',
       '--ask-for-approval never',
     ].join(' ')
   }
 
-  return `claude --model ${quote(player.model)} --permission-mode bypassPermissions`
+  return [
+    'claude',
+    `--model ${quote(player.model)}`,
+    ...(player.effort === undefined ? [] : [`--effort ${quote(player.effort)}`]),
+    '--permission-mode bypassPermissions',
+  ].join(' ')
 }
 
 function createStartedPlayer(player: PlayerConfig) {
-  return {
+  const startedPlayer = {
     model: player.model,
     provider: player.provider,
     strategy: player.strategy ?? '',
+  }
+
+  if (player.effort === undefined) {
+    return startedPlayer
+  }
+
+  return {
+    ...startedPlayer,
+    effort: player.effort,
   }
 }
 
@@ -559,6 +632,33 @@ function validateModel(provider: Provider, model: string): void {
   process.exit(1)
 }
 
+function validateEffort(
+  provider: Provider,
+  model: string,
+  effort: string | undefined,
+): asserts effort is EffortLevel | undefined {
+  if (effort === undefined) {
+    return
+  }
+
+  const efforts = getEffortOptions(provider, model)
+
+  if (efforts.some(option => option.value === effort)) {
+    return
+  }
+
+  const modelLabel = getModelOption(provider, model)?.label ?? model
+
+  if (efforts.length === 0) {
+    print(`${modelLabel} does not support effort selection.`)
+  } else {
+    print(`Unknown ${provider} effort "${effort}" for ${modelLabel}.`)
+    print(`Expected one of: ${efforts.map(option => option.value).join(', ')}`)
+  }
+
+  process.exit(1)
+}
+
 function createRepeatGameCommand(): string {
   return Object.entries(accumulatedArgs).reduce((command, [name, value]) => {
     if (value === undefined || value === false || name === 'help') {
@@ -589,6 +689,24 @@ function readCachedModel(name: 'blackModel' | 'whiteModel', provider: Provider):
   return modelOptionsByProvider[provider].some(option => option.value === value) ? value : undefined
 }
 
+function readCachedEffort(
+  name: 'blackEffort' | 'whiteEffort',
+  provider: Provider,
+  model: string,
+): EffortLevel | undefined {
+  const value = cache.args[name]
+
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  if (!isEffortLevel(value)) {
+    return undefined
+  }
+
+  return getEffortOptions(provider, model).some(option => option.value === value) ? value : undefined
+}
+
 function readCachedStrategy(name: 'blackStrategy' | 'whiteStrategy'): string | undefined {
   const value = cache.args[name]
 
@@ -597,7 +715,7 @@ function readCachedStrategy(name: 'blackStrategy' | 'whiteStrategy'): string | u
 
 function recordArg(name: 'blackProvider' | 'whiteProvider', value: Provider): void
 function recordArg(
-  name: 'blackModel' | 'blackStrategy' | 'whiteModel' | 'whiteStrategy',
+  name: 'blackEffort' | 'blackModel' | 'blackStrategy' | 'whiteEffort' | 'whiteModel' | 'whiteStrategy',
   value: string | undefined,
 ): void
 function recordArg(name: ArgNames, value: boolean | string | undefined): void {
