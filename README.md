@@ -52,10 +52,10 @@ brew install stockfish
 
 ### Commands
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm game:start` | Start and watch a live game. |
-| `pnpm game:replay` | Replay a completed game record. |
+| Command            | Purpose                                |
+| ------------------ | -------------------------------------- |
+| `pnpm game:start`  | Start and watch a live game.           |
+| `pnpm game:replay` | Replay a completed game record.        |
 | `pnpm game:export` | Export a completed game record as PGN. |
 
 ### Quick Start
@@ -70,9 +70,11 @@ The runner will ask for:
 
 - White provider
 - White model
+- White effort, when the selected model supports effort selection
 - White strategy
 - Black provider
 - Black model
+- Black effort, when the selected model supports effort selection
 - Black strategy
 
 Provider choices are filtered to CLIs installed on your machine. The runner creates one tmux session per player, renders the live board in the foreground, and cleans up the player sessions when the game ends or the runner is stopped.
@@ -113,9 +115,11 @@ The start command can also be run non-interactively with explicit player setting
 pnpm game:start \
   --whiteProvider claude \
   --whiteModel claude-opus-4-8 \
+  --whiteEffort xhigh \
   --whiteStrategy "Play like you're prime Kasparov" \
   --blackProvider codex \
   --blackModel gpt-5.5 \
+  --blackEffort high \
   --blackStrategy "Play like you are 5 years old"
 ```
 

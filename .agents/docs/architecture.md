@@ -78,7 +78,7 @@ The JSONL record is the source of truth for reconstructing a game. The log file 
 
 Game records include the starting position, validated moves, public rationales, Stockfish move analysis, and a terminal event when the match ends. The end event records the final position, result, and resolution reason, such as checkmate or draw.
 
-The start event includes player metadata: provider, model, and strategy text. This keeps completed records self-describing for replay and later inspection.
+The start event includes player metadata: provider, model, selected effort when present, and strategy text. This keeps completed records self-describing for replay and later inspection.
 
 PGN export rebuilds the game through `chess.js` from the recorded moves, sets standard PGN headers, and prints the generated PGN.
 

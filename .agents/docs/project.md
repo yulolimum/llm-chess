@@ -62,10 +62,10 @@ The workspace contains a TypeScript CLI app and a validated game session launche
 - Runtime output in `.games/<guid>.jsonl` and `.games/<guid>.log`.
 - Initial chess game state creation using `chess.js`.
 - A chessboard component that renders from `chess.js` board state and displays Stockfish move analysis in the move feed.
-- Player provider, model, and optional strategy selection when starting a game.
-- Player provider, model, and strategy metadata recorded with each game.
+- Player provider, model, supported effort, and optional strategy selection when starting a game.
+- Player provider, model, effort, and strategy metadata recorded with each game.
 - Local dependency checks for tmux, Stockfish, and supported provider CLIs.
-- Static model option lists for supported CLIs.
+- Static model and effort option lists for supported CLIs.
 - Chess move submission and turn waiting through agent protocol scripts.
 - Move validation, replay, and basic match completion detection through `chess.js`.
 - Public move rationales and Stockfish analysis recorded with validated moves.
