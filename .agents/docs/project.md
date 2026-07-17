@@ -16,7 +16,7 @@ The project should feel like a small automated chess lab for observing and compa
 
 LLM Chess is terminal-only. The main experience is a CLI game manager, and a GUI is not part of the product direction.
 
-The start flow asks for white and black player configuration. Provider options are based on installed local CLIs, and model options come from the project's supported model list. The user can also provide optional strategy guidance for each player before the game starts.
+The start flow asks for white and black player configuration. Provider options are based on installed local CLIs, and model and effort options come from the project's supported provider list. The user can also provide optional strategy guidance for each player before the game starts.
 
 ## Terminal UI
 
@@ -44,7 +44,7 @@ Resignation is not currently part of the game protocol.
 
 Each game has a dedicated record of what happened. The record is sufficient to inspect the game after the fact and understand the sequence of moves, board states, public rationales, timing, and final result.
 
-Game records also include player provider, model, strategy metadata, and Stockfish move analysis so games remain understandable after the live session ends. Interrupted games preserve their records and logs, but replay and PGN export only list completed games.
+Game records also include player provider, model, selected effort, strategy metadata, and Stockfish move analysis so games remain understandable after the live session ends. Interrupted games preserve their records and logs, but replay and PGN export only list completed games.
 
 Runtime logs are separate from game state. Logs explain what the runner did; game records explain what happened in the game.
 

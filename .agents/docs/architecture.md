@@ -10,7 +10,7 @@ The runner owns the game session. It checks required local tooling, creates the 
 
 The runner is intended to run from a normal terminal. It is not designed around Conductor's non-interactive shell as the game runtime.
 
-The runner is the only user-facing entry point for a normal live game. It checks tmux, Stockfish, and provider CLIs; asks for white and black player configuration; filters providers to installed local CLIs; and stores selected settings so a completed game can be rerun with the same configuration.
+The runner is the only user-facing entry point for a normal live game. It checks tmux, Stockfish, and provider CLIs; asks for white and black player configuration including model effort when supported; filters providers to installed local CLIs; and stores selected settings so a completed game can be rerun with the same configuration.
 
 Completed games can be inspected with `pnpm game:replay`. The replay command scans `.games` for completed JSONL records, asks the user to choose a game and playback speed, then renders the recorded positions in the terminal. Interrupted records are preserved but skipped because they do not contain a game-end event.
 
@@ -96,7 +96,7 @@ LLM Chess is a CLI product. UI architecture should stay focused on terminal rend
 
 The chessboard reads board state from `chess.js`. UI components should not maintain a separate chess position model when the engine already provides the board state.
 
-The main game view shows the full move feed, white and black player metadata, player strategy guidance when present, captured pieces, player status, and the current board. The move feed includes public rationales plus Stockfish labels and evaluations such as `Best · +0.44`. Evaluations use standard chess-engine sign convention: positive favors White and negative favors Black.
+The main game view shows the full move feed, white and black player metadata, selected effort when present, player strategy guidance when present, captured pieces, player status, and the current board. The move feed includes public rationales plus Stockfish labels and evaluations such as `Best · +0.44`. Evaluations use standard chess-engine sign convention: positive favors White and negative favors Black.
 
 Replay uses the same board component as the live game view. During playback, it hides the move feed so the changing position is the focus. The final replay frame shows the full feed alongside the completed board.
 
@@ -108,4 +108,4 @@ The coordination approach has been validated. The non-chess validation code has 
 
 The repository has a terminal-rendered chessboard backed by `chess.js` board state.
 
-The repository has chess-specific move submission, move validation, Stockfish analysis for accepted moves, turn waiting, completed game replay, completed game PGN export, match completion detection, explicit game-end records, provider availability checks, player strategy prompts, public move rationales, player metadata in game records, and terminal UI previews.
+The repository has chess-specific move submission, move validation, Stockfish analysis for accepted moves, turn waiting, completed game replay, completed game PGN export, match completion detection, explicit game-end records, provider availability checks, player effort and strategy prompts, public move rationales, player metadata in game records, and terminal UI previews.
