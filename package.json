@@ -33,6 +33,7 @@
     "game:start": "tsx src/scripts/start.ts"
   },
   "dependencies": {
+    "change-case": "catalog:",
     "chess.js": "catalog:",
     "ink": "catalog:",
     "pretty-ms": "catalog:",

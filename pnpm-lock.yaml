@@ -24,6 +24,9 @@ catalogs:
     '@types/react':
       specifier: 19.2.17
       version: 19.2.17
+    change-case:
+      specifier: 5.4.4
+      version: 5.4.4
     chess.js:
       specifier: 1.4.0
       version: 1.4.0
@@ -91,6 +94,9 @@ catalogs:
 importers:
   .:
     dependencies:
+      change-case:
+        specifier: 'catalog:'
+        version: 5.4.4
       chess.js:
         specifier: 'catalog:'
         version: 1.4.0
@@ -857,6 +863,10 @@ packages:
     resolution:
       { integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA== }
     engines: { node: ^12.17.0 || ^14.13 || >=16.0.0 }
+
+  change-case@5.4.4:
+    resolution:
+      { integrity: sha512-YKNEy9zOby3titB2ySY0Rh1c0qu0ciNnqRsShYelQVotukSbE2vQpnnSshFzI71GNFEXrhzeT/9B6Yt5uVV6rw== }
 
   chess.js@1.4.0:
     resolution:
@@ -2881,6 +2891,8 @@ snapshots:
       supports-color: 7.2.0
 
   chalk@5.6.2: {}
+
+  change-case@5.4.4: {}
 
   chess.js@1.4.0: {}
 
