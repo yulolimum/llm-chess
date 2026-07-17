@@ -20,8 +20,8 @@ Completed games can be exported with `pnpm game:export`. The export command scan
 
 Each player runs in its own tmux session. The sessions are named from the game id:
 
-- `llm-chess-<guid>-white`
-- `llm-chess-<guid>-black`
+- `llm-chess-<game-id>-white`
+- `llm-chess-<game-id>-black`
 
 The runner starts these sessions but does not attach to them. The foreground process remains the game manager.
 
@@ -71,8 +71,8 @@ Stockfish analysis is part of the accepted-move path. If the engine is missing, 
 
 Each game writes two runtime files:
 
-- `.games/<guid>.jsonl` for game state and events,
-- `.games/<guid>.log` for runner logs.
+- `.games/<epoch-ms>--<white-model>_<white-effort>--<black-model>_<black-effort>.jsonl` for game state and events,
+- `.games/<epoch-ms>--<white-model>_<white-effort>--<black-model>_<black-effort>.log` for runner logs.
 
 The JSONL record is the source of truth for reconstructing a game. The log file is operational output.
 

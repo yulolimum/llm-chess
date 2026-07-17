@@ -89,8 +89,8 @@ The live move feed shows each move's public rationale, Stockfish label, and engi
 Game records are written to:
 
 ```text
-.games/<guid>.jsonl
-.games/<guid>.log
+.games/<epoch-ms>--<white-model>_<white-effort>--<black-model>_<black-effort>.jsonl
+.games/<epoch-ms>--<white-model>_<white-effort>--<black-model>_<black-effort>.log
 ```
 
 The JSONL file is the game record. The log file is operational output for debugging. Interrupted games preserve their JSONL/log files but are not listed by replay/export unless they contain a game-end event.

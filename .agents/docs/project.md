@@ -59,7 +59,7 @@ The workspace contains a TypeScript CLI app and a validated game session launche
 - User-facing `pnpm game:start`, `pnpm game:replay`, and `pnpm game:export` commands.
 - Agent protocol `pnpm agent:move` and `pnpm agent:wait` commands for LLM turn coordination.
 - Developer `pnpm dev:storybook` command for terminal UI component previews.
-- Runtime output in `.games/<guid>.jsonl` and `.games/<guid>.log`.
+- Runtime output in `.games/<epoch-ms>--<white-model>_<white-effort>--<black-model>_<black-effort>.jsonl` and `.games/<epoch-ms>--<white-model>_<white-effort>--<black-model>_<black-effort>.log`.
 - Initial chess game state creation using `chess.js`.
 - A chessboard component that renders from `chess.js` board state and displays Stockfish move analysis in the move feed.
 - Player provider, model, supported effort, and optional strategy selection when starting a game.
