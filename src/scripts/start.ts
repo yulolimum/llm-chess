@@ -28,7 +28,7 @@ import {
 import { readGameState } from '../game/state.js'
 import { createLogger, setSessionLogFile } from '../utils/create-logger.js'
 import { renderPlayerPrompt } from '../utils/player-prompt.js'
-import { createSortableGuid } from '../utils/strings.js'
+import { createGameGuid } from '../utils/strings.js'
 
 //
 // Constants
@@ -173,7 +173,10 @@ const blackPlayer = await selectPlayerConfig(
 )
 
 const cwd = process.cwd()
-const gameGuid = createSortableGuid()
+const gameGuid = createGameGuid({
+  black: blackPlayer,
+  white: whitePlayer,
+})
 const gameStartedEvent = createGameStartedEvent({
   players: {
     black: createStartedPlayer(blackPlayer),

@@ -1,8 +1,18 @@
-import { randomBytes } from 'node:crypto'
+import { kebabCase } from 'change-case'
 
-export function createSortableGuid(): string {
-  const timestamp = new Date().toISOString().replaceAll(/[-:.]/g, '').replace('T', '-').replace('Z', '')
-  const randomPart = randomBytes(8).toString('hex')
+type GameIdPlayer = {
+  effort: string | undefined
+  model: string
+}
 
-  return `${timestamp}-${randomPart}`
+export function createGameGuid(players: { black: GameIdPlayer; white: GameIdPlayer }) {
+  return [Date.now().toString(), formatGameIdPlayer(players.white), formatGameIdPlayer(players.black)].join('--')
+}
+
+function formatGameIdPlayer(player: GameIdPlayer) {
+  return `${slugifyGameIdPart(player.model)}_${slugifyGameIdPart(player.effort ?? 'none')}`
+}
+
+function slugifyGameIdPart(value: string) {
+  return kebabCase(value) || 'unknown'
 }
