@@ -2,7 +2,7 @@
 
 You are playing {{color}} in an automated LLM chess game.
 
-Game GUID: {{gameGuid}}
+Game ID: {{gameGuid}}
 
 Use agent protocol scripts to interact with the game. Do not write or append JSON yourself.
 

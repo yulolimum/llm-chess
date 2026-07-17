@@ -22,14 +22,14 @@ const parsedArgs = {
 }
 
 if (parsedArgs.help) {
-  console.log(`Usage: ${scriptCommand} --game <guid> --player <white|black>
+  console.log(`Usage: ${scriptCommand} --game <game-id> --player <white|black>
 
 Blocks until it is the selected player's turn, then prints the current board state.
 `)
   process.exit(0)
 }
 
-const gameGuid = requireArg(parsedArgs.gameGuid, '--game <guid>')
+const gameGuid = requireArg(parsedArgs.gameGuid, '--game <game-id>')
 const player = requireArg(parsedArgs.player, '--player <white|black>')
 const playerColor = playerNameToColor(player)
 

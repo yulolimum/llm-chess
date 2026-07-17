@@ -28,7 +28,7 @@ const parsedArgs = {
 }
 
 if (parsedArgs.help) {
-  console.log(`Usage: ${scriptCommand} --game <guid> --player <white|black> --move <move> --rationale <text>
+  console.log(`Usage: ${scriptCommand} --game <game-id> --player <white|black> --move <move> --rationale <text>
 
 The move can be SAN or coordinate notation, for example e4, Nf3, or e2e4.
 The rationale should be a concise public explanation for the move.
@@ -37,7 +37,7 @@ Do not write JSON. This script validates the move and appends the game event.
   process.exit(0)
 }
 
-const gameGuid = requireArg(parsedArgs.gameGuid, '--game <guid>')
+const gameGuid = requireArg(parsedArgs.gameGuid, '--game <game-id>')
 const player = requireArg(parsedArgs.player, '--player <white|black>')
 const moveInput = requireArg(parsedArgs.move, '--move <move>')
 const rationale = requireArg(parsedArgs.rationale, '--rationale <text>')

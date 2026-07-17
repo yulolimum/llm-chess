@@ -94,7 +94,7 @@ if (parsedArgs.help) {
   log(`Usage: ${scriptCommand} [options]
 
 Options:
-  --game <guid>       Game record id to export
+  --game <game-id>    Game record id to export
   --verbose, -v       Enable debug logs
   --help, -h          Show help
 `)

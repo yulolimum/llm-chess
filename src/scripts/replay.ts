@@ -111,7 +111,7 @@ if (parsedArgs.help) {
   log(`Usage: ${scriptCommand} [options]
 
 Options:
-  --game <guid>       Game record id to replay
+  --game <game-id>    Game record id to replay
   --speed <speed>     Replay speed: slow, normal, fast, instant
   --verbose, -v       Enable debug logs
   --help, -h          Show help
