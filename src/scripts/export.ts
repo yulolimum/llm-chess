@@ -11,7 +11,7 @@ import { renderStill, selectComposition } from '@remotion/renderer'
 import { Chess } from 'chess.js'
 import path from 'node:path'
 import process from 'node:process'
-import { fs, minimist, quote } from 'zx'
+import { $, fs, minimist, nothrow, quiet, quote } from 'zx'
 
 import { ensureGamesDirectory, getGamesDirectory, readGameEvents } from '../game/files.js'
 import { createBoardPlayers, createMoveFeed } from '../game/presentation.js'
@@ -26,6 +26,10 @@ const scriptCommand = 'pnpm game:export'
 const pgnMaxWidth = 80
 const videoCompositionId = 'ChessReplayPreview'
 const videoFrameDigits = 3
+const videoFrameDurationSeconds = 1
+const videoExportDirectoryName = 'export'
+const videoFinalFrameDurationSeconds = 3
+const videoFps = 30
 const exportFormatOptions = [
   { label: 'PGN', value: 'pgn' },
   { label: 'Video', value: 'video' },
@@ -38,6 +42,10 @@ type CompletedGame = {
   guid: string
   moves: MoveEvent[]
   started: GameStartedEvent
+}
+type VideoExport = {
+  frames: string[]
+  output: string
 }
 
 //
@@ -114,7 +122,7 @@ if (parsedArgs.help) {
 Options:
   --format <format>   Export format: pgn, video
   --game <game-id>    Game record id to export
-  --video             Export video frames
+  --video             Export an MP4 video
   --verbose, -v       Enable debug logs
   --help, -h          Show help
 `)
@@ -198,10 +206,12 @@ const selectedGame = await (async function () {
 })()
 
 if (selectedFormat === 'video') {
-  const renderedFrames = await exportGameToVideoFrames(selectedGame)
+  await assertFfmpegInstalled()
+  const video = await exportGameToVideo(selectedGame)
 
-  log(`Rendered ${renderedFrames.length} video frame${renderedFrames.length === 1 ? '' : 's'}:`)
-  for (const frame of renderedFrames) {
+  log(`Exported video: ${video.output}`)
+  log(`Rendered ${video.frames.length} video frame${video.frames.length === 1 ? '' : 's'}:`)
+  for (const frame of video.frames) {
     log(frame)
   }
 } else {
@@ -267,7 +277,7 @@ async function readCompletedGame(guid: string): Promise<CompletedGame | null> {
 
 async function exportGameToVideoFrames(game: CompletedGame): Promise<string[]> {
   const frames = createVideoFrames(game)
-  const outputDirectory = path.join(getGamesDirectory(), 'tmp')
+  const outputDirectory = getVideoExportDirectory()
   await fs.ensureDir(outputDirectory)
 
   const serveUrl = await bundle({
@@ -306,6 +316,25 @@ async function exportGameToVideoFrames(game: CompletedGame): Promise<string[]> {
   }
 
   return renderedFrames
+}
+
+async function exportGameToVideo(game: CompletedGame): Promise<VideoExport> {
+  const frames = await exportGameToVideoFrames(game)
+  const outputDirectory = getVideoExportDirectory()
+  const framePattern = path.join(outputDirectory, `${game.guid}-%03d.png`)
+  const output = path.join(outputDirectory, `${game.guid}.mp4`)
+  const finalFrameHoldSeconds = videoFinalFrameDurationSeconds - videoFrameDurationSeconds
+
+  await quiet(
+    $`ffmpeg -y -hide_banner -loglevel error -framerate 1 -start_number 0 -i ${framePattern} -vf tpad=stop_mode=clone:stop_duration=${finalFrameHoldSeconds},fps=${videoFps},format=yuv420p -movflags +faststart ${output}`,
+  )
+  debug('exported video:', output)
+
+  return { frames, output }
+}
+
+function getVideoExportDirectory(): string {
+  return path.join(getGamesDirectory(), videoExportDirectoryName)
 }
 
 function createVideoFrames(game: CompletedGame): { index: number; props: ChessBoardProps }[] {
@@ -460,4 +489,14 @@ function parseExportFormatArg(value: unknown, video: boolean): ExportFormat | un
 
 function isExportFormat(value: string): value is ExportFormat {
   return exportFormatOptions.some(option => option.value === value)
+}
+
+async function assertFfmpegInstalled(): Promise<void> {
+  const result = await quiet(nothrow($`command -v ffmpeg`))
+
+  if (result.exitCode !== 0) {
+    log('ffmpeg is required to export a game video.')
+    log('Install it with: brew install ffmpeg')
+    process.exit(1)
+  }
 }
