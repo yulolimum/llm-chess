@@ -6,7 +6,7 @@
 
 ## The Idea
 
-LLM Chess is a terminal-only chess lab for answering one of the least urgent questions in modern computing: what happens when two expensive text prediction machines are asked to spend real money and electricity playing a board game from the 6th century?
+LLM Chess is a CLI-first chess lab for answering one of the least urgent questions in modern computing: what happens when two expensive text prediction machines are asked to spend real money and electricity playing a board game from the 6th century?
 
 It is built for burning tokens, warming data centers, and converting a perfectly solved set of rules into a premium cloud workload. It is the kind of project that looks at Stockfish, shrugs, and asks whether the same outcome could be achieved more slowly, more expensively, and with significantly more prose.
 
@@ -52,11 +52,11 @@ brew install stockfish
 
 ### Commands
 
-| Command            | Purpose                                |
-| ------------------ | -------------------------------------- |
-| `pnpm game:start`  | Start and watch a live game.           |
-| `pnpm game:replay` | Replay a completed game record.        |
-| `pnpm game:export` | Export a completed game record as PGN. |
+| Command            | Purpose                                                   |
+| ------------------ | --------------------------------------------------------- |
+| `pnpm game:start`  | Start and watch a live game.                              |
+| `pnpm game:replay` | Replay a completed game record.                           |
+| `pnpm game:export` | Export a completed game record as PGN or rendered frames. |
 
 ### Quick Start
 
@@ -97,6 +97,8 @@ The JSONL file is the game record. The log file is operational output for debugg
 
 Move events include Stockfish metadata: best move, played move, depth, evaluation, WDL-derived expected-points loss when available, principal variation, and move-quality label.
 
+The runner starts each player as a long-lived tmux session. The game-start prompt is passed as the provider CLI's initial prompt so the model initializes with the right context. White's initial prompt also includes the first turn instruction. After that, the game manager sends turn instructions to the active player and the player submits moves with `pnpm agent:move`.
+
 ### Replays
 
 Replay a completed game:
@@ -127,26 +129,37 @@ Replay can also be run non-interactively:
 
 ```sh
 pnpm game:replay \
-  --game 20260611-175354407-1830292513731a16 \
+  --game GAME_ID \
   --speed normal
 ```
 
-### PGN Export
+### Exports
 
 Print a completed game as PGN:
 
 ```sh
-pnpm game:export
+pnpm game:export --format pgn
 ```
 
 Export can also be run non-interactively:
 
 ```sh
 pnpm --silent game:export \
-  --game 20260611-175354407-1830292513731a16
+  --game GAME_ID \
+  --format pgn
 ```
 
 The PGN export contains the validated move sequence and game headers. Stockfish metadata remains in the JSONL record and is not emitted as PGN comments.
+
+Render replay frames with the web board:
+
+```sh
+pnpm game:export \
+  --game GAME_ID \
+  --format video
+```
+
+`--video` is an alias for `--format video`. Video export currently renders one PNG frame per replay position into `.games/tmp/<game-id>-<frame>.png`. It does not encode a final movie file yet. Frames are rendered with Remotion from the web chessboard component, and the final frame includes the game result and ending reason.
 
 ### UI Previews
 
@@ -154,4 +167,10 @@ Preview the chessboard component:
 
 ```sh
 pnpm dev:storybook --component chessboard
+```
+
+Preview the web chessboard used for rendered replay frames:
+
+```sh
+pnpm dev:storybook --component chessboard-web
 ```
