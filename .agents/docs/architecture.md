@@ -16,7 +16,7 @@ Completed games can be inspected with `pnpm game:replay`. The replay command sca
 
 Completed games can be exported with `pnpm game:export`. The export command scans completed records with the same selection pattern and supports PGN plus supplemental video export. PGN is the default. PGN export rebuilds validated moves and headers; Stockfish analysis remains JSONL-only. Video export checks for ffmpeg only when selected, renders PNG stills for each replay position into `.games/export`, then stitches them into an MP4 in the same directory.
 
-## Player Sessions
+## Player sessions
 
 Each player runs in its own tmux session. The sessions are named from the game id:
 
@@ -29,7 +29,7 @@ Before starting a new game, existing LLM Chess tmux sessions are cleared so each
 
 When the game ends, or when the runner is interrupted, the runner stops the player sessions while preserving the game record and log files.
 
-## Turn Coordination
+## Turn coordination
 
 The validated coordination pattern is supervisor-mediated through `pnpm supervisor:instruct` and `pnpm agent:move`. These are protocol commands, not normal user entry points.
 
@@ -75,7 +75,7 @@ Accepted moves are analyzed from the pre-move FEN. The analysis compares the eng
 
 Stockfish analysis is part of the accepted-move path. If the engine is missing, `pnpm game:start` fails before starting player sessions.
 
-## Game Records
+## Game records
 
 Each game writes two runtime files:
 
@@ -90,7 +90,7 @@ The start event includes player metadata: provider, model, selected effort when 
 
 PGN export rebuilds the game through `chess.js` from the recorded moves, sets standard PGN headers, and prints the generated PGN.
 
-Video export replays the same JSONL record into board props and renders each position through Remotion. It writes one PNG per frame to `.games/export/<game-id>-<frame>.png`, then uses ffmpeg to encode `.games/export/<game-id>.mp4`. The final frame includes the game-end event so player statuses, winner, result, and ending reason are visible. Export timing is one second per replay position, with the final result frame held for three seconds.
+Video export replays the same JSONL record into board props and renders each position through Remotion. It writes one PNG per replay position to `.games/export/<game-id>-<frame>.png`, then uses ffmpeg to encode `.games/export/<game-id>.mp4`. Export timing is one second per replay position, with the final result frame held for three seconds. The MP4 is encoded at 30 FPS with 4:4:4 color and CRF 18 compression, which avoids the color halos that 4:2:0 encoding can add around sharp replay badges.
 
 Protocol scripts keep their terminal output focused on move submission and turn coordination. Detailed diagnostics are written to the game log.
 
@@ -98,7 +98,7 @@ Move duration in the UI is derived from game event timestamps.
 
 Stockfish analysis is stored on move events. Analysis records the engine, depth, best move, played move, White-normalized engine evaluations, mover-perspective loss, expected-points loss when WDL is available, principal variation, and move-quality label.
 
-## UI Rendering
+## UI rendering
 
 Terminal UI components are rendered with Ink.
 
@@ -110,11 +110,11 @@ The main game view shows the full move feed, white and black player metadata, se
 
 Replay uses the same board component as the live game view. During playback, it hides the move feed so the changing position is the focus. The final replay frame shows the full feed alongside the completed board.
 
-The web chessboard accepts the same shared board props as the terminal chessboard but uses browser layout for rendered frames. It shows the current move, a compact move feed, player rails, captured pieces, status badges, Stockfish labels, and a final result banner when the game-end event is present.
+The web chessboard accepts the same shared board props as the terminal chessboard but uses browser layout for rendered frames. It is styled with Tailwind CSS and daisyUI, and Remotion is configured to process that stylesheet for both preview and export rendering. It shows player rails, captured pieces, status badges, Stockfish labels, a newest-first move feed, and a final result banner when the game-end event is present. The latest completed move is marked inside the feed, and older feed rows are clipped by the feed panel instead of removed before rendering.
 
 The local `pnpm dev:storybook` script is used to preview board components outside the game runner. It supports the terminal board preview and the web board preview used by Remotion.
 
-## Current State
+## Current state
 
 The coordination approach has been validated. The non-chess validation code has been removed.
 
