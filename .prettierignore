@@ -1,3 +1,9 @@
 .games/
 .context/
+.eslintcache
+.pnpm-store/
+.yarn/
+dist/
+dist-ssr/
 node_modules/
+pnpm-lock.yaml
