@@ -1,44 +1,30 @@
 import type { EngineScore, MoveQuality } from '../game/types.js'
-import type { Chess, Color, PieceSymbol } from 'chess.js'
+import type {
+  BoardSquare,
+  CapturedPiece,
+  ChessBoardPlayer,
+  ChessBoardProps,
+  MoveFeedAnalysis,
+  MoveFeedEntry,
+  PlayerStatus,
+} from './ChessBoard.types.js'
+import type { PieceSymbol } from 'chess.js'
 
 import { Box, Text } from 'ink'
 import React from 'react'
 
+export type {
+  Board,
+  BoardSquare,
+  CapturedPiece,
+  ChessBoardPlayer,
+  ChessBoardProps,
+  MoveFeedAnalysis,
+  MoveFeedEntry,
+  PlayerStatus,
+} from './ChessBoard.types.js'
+
 import { pieceSpriteHeight, pieceSprites, pieceSpriteWidth } from '../utils/pieces.js'
-
-type Board = ReturnType<Chess['board']>
-type Square = Board[number][number]
-export type PlayerStatus = 'draw' | 'lost' | 'on-move' | 'won'
-
-export type ChessBoardPlayer = {
-  capturedPieces?: readonly CapturedPiece[]
-  effort?: string
-  model: string
-  provider: string
-  status?: PlayerStatus
-  strategy?: string
-}
-
-export type MoveFeedEntry = {
-  analysis?: MoveFeedAnalysis
-  color?: Color
-  duration?: string
-  move?: string
-  moveNumber?: number
-  rationale?: string
-  text?: string
-  type: 'game-ended' | 'game-started' | 'move'
-}
-
-export type MoveFeedAnalysis = {
-  classification: MoveQuality
-  eval: EngineScore
-}
-
-export type CapturedPiece = {
-  color: Color
-  type: PieceSymbol
-}
 
 const lightSquare = '#9ca3af'
 const darkSquare = '#4b5563'
@@ -113,19 +99,7 @@ const analysisBadgeInnerWidth =
   ' · '.length +
   analysisScoreWidth
 
-export function ChessBoard({
-  blackPlayer,
-  board,
-  moveFeed = [],
-  showMoveFeed = true,
-  whitePlayer,
-}: {
-  blackPlayer?: ChessBoardPlayer
-  board: Board
-  moveFeed?: readonly MoveFeedEntry[]
-  showMoveFeed?: boolean
-  whitePlayer?: ChessBoardPlayer
-}) {
+export function ChessBoard({ blackPlayer, board, moveFeed = [], showMoveFeed = true, whitePlayer }: ChessBoardProps) {
   return (
     <Box flexDirection="column" padding={1}>
       {showMoveFeed ? <MoveFeed entries={moveFeed} /> : null}
@@ -291,7 +265,7 @@ function CapturedPieces({ pieces }: { pieces: readonly CapturedPiece[] }) {
   )
 }
 
-function SquareView({ fileIndex, piece, rankIndex }: { fileIndex: number; piece: Square; rankIndex: number }) {
+function SquareView({ fileIndex, piece, rankIndex }: { fileIndex: number; piece: BoardSquare; rankIndex: number }) {
   const isLight = (rankIndex + fileIndex) % 2 === 0
   const backgroundColor = isLight ? lightSquare : darkSquare
 
@@ -306,7 +280,7 @@ function SquareView({ fileIndex, piece, rankIndex }: { fileIndex: number; piece:
   )
 }
 
-function renderSquareRows(piece: Square): string[] {
+function renderSquareRows(piece: BoardSquare): string[] {
   if (piece === null) {
     return Array.from({ length: pieceSpriteHeight }, () => emptyPixel.repeat(pieceSpriteWidth))
   }

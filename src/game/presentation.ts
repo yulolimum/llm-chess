@@ -75,10 +75,18 @@ export function createMoveFeed(state: GameState): MoveFeedEntry[] {
     }
 
     if (event.type === 'game_ended') {
-      entries.push({
+      const entry: MoveFeedEntry = {
+        reason: event.reason,
+        result: event.result,
         text: `Game ended: ${event.result} by ${event.reason}`,
         type: 'game-ended',
-      })
+      }
+
+      if (event.winner !== undefined) {
+        entry.winner = event.winner
+      }
+
+      entries.push(entry)
     }
   }
 

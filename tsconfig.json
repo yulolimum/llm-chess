@@ -2,7 +2,7 @@
   "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
     "jsx": "react",
-    "lib": ["ES2024"],
+    "lib": ["DOM", "ES2024"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noEmit": true,
@@ -10,5 +10,5 @@
     "target": "ES2024",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

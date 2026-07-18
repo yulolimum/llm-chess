@@ -33,12 +33,17 @@
     "supervisor:instruct": "tsx src/scripts/supervisor-instruct.ts"
   },
   "dependencies": {
+    "@remotion/bundler": "catalog:",
+    "@remotion/cli": "catalog:",
+    "@remotion/renderer": "catalog:",
     "change-case": "catalog:",
     "chess.js": "catalog:",
     "ink": "catalog:",
     "pretty-ms": "catalog:",
     "react": "catalog:",
-    "react-devtools-core": "catalog:"
+    "react-devtools-core": "catalog:",
+    "react-dom": "catalog:",
+    "remotion": "catalog:"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
@@ -47,6 +52,7 @@
     "@tsconfig/strictest": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-formatter-pretty": "catalog:",
