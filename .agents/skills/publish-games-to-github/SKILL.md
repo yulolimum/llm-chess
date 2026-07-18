@@ -24,11 +24,17 @@ yulolimum/llm-chess
 ## Rules
 
 - Never create issues without first showing the candidate table and waiting for the user's selection.
-- Treat a game as already posted when an open or closed issue has the exact game id as its title.
-- Use the exact game id as the issue title. The game id is the `.games/*.jsonl` filename without the `.jsonl` extension.
+- Treat a game as already posted when an open or closed issue body contains the exact game id in the `**Game**:` field. Also treat exact-title matches as already posted for issues created by older versions of this workflow.
+- Use the `.games/*.jsonl` filename without the `.jsonl` extension as the game id.
+- Use only the timestamp prefix from the game id in the issue title. The timestamp prefix is everything before the first `--`.
+- Generate the rest of the issue title from the two player strategies. The title should distill the strategic matchup descriptively; length does not matter.
+- Format issue titles as `<timestamp-prefix> - <generated strategy title>`.
 - Copy selected game ids from the candidate table or filename. Do not retype or manually transform game ids.
 - Use `pnpm` scripts for project operations. Do not call `tsx src/scripts/...` directly.
 - Add the `game` label to every created issue. Create the label if it does not exist.
+- Add provider labels for both players, formatted as `provider:<provider>`.
+- Add model and effort labels for both players, formatted as `model-effort:<model>_<effort or none>`.
+- Deduplicate labels before creating the issue.
 - Include PGN in the issue body inside a fenced `pgn` code block.
 - Do not include exported PNG frame information in the issue.
 - Upload replay videos to the `game-replays` release. Game MP4 filenames are unique, so `--clobber` is acceptable when re-running the publisher for the same game.
@@ -61,16 +67,17 @@ yulolimum/llm-chess
 4. Find already-posted games:
 
    ```sh
-   gh issue list -R yulolimum/llm-chess --state all --limit 1000 --json number,title,url,labels
+   gh issue list -R yulolimum/llm-chess --state all --limit 1000 --json number,title,url,labels,body
    ```
 
-   Match by exact title.
+   Match by the body `**Game**:` field. Also match exact titles for issues created before the title format changed.
 
 5. Present a numbered candidate table for unposted completed games and wait for the user's selection.
 
    Include these columns:
 
    - number
+   - proposed title
    - game id
    - result
    - moves
@@ -100,7 +107,14 @@ yulolimum/llm-chess
      ```
 
    - Create the `game` label if needed.
+   - Create provider and model-effort labels if needed.
    - Create the GitHub issue with the exact format below.
+
+   Label creation pattern:
+
+   ```sh
+   gh label create "<label-name>" -R yulolimum/llm-chess --color "<hex-color>" --description "<description>"
+   ```
 
 ## Issue format
 
@@ -143,7 +157,15 @@ Use this structure exactly, while filling values from the game record. Do not ad
 Create the issue with:
 
 ```sh
-gh issue create -R yulolimum/llm-chess --title "<game-id>" --body-file "<body-file>" --label game
+gh issue create \
+  -R yulolimum/llm-chess \
+  --title "<timestamp-prefix> - <generated strategy title>" \
+  --body-file "<body-file>" \
+  --label game \
+  --label "provider:<white-provider>" \
+  --label "provider:<black-provider>" \
+  --label "model-effort:<white-model>_<white-effort-or-none>" \
+  --label "model-effort:<black-model>_<black-effort-or-none>"
 ```
 
 ## Validation
