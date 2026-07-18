@@ -5,6 +5,8 @@ import { AbsoluteFill, Composition, getInputProps, registerRoot } from 'remotion
 
 import { ChessBoard } from './ChessBoard.web.js'
 
+import './remotion.css'
+
 function ChessReplayPreview() {
   const inputProps = getInputProps<ChessBoardProps>()
 

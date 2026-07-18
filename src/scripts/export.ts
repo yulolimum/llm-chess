@@ -8,6 +8,7 @@ import type { GameEndedEvent, GameEvent, GameStartedEvent, GameStartedPlayer, Mo
 import select from '@inquirer/select'
 import { bundle } from '@remotion/bundler'
 import { renderStill, selectComposition } from '@remotion/renderer'
+import { enableTailwind } from '@remotion/tailwind-v4'
 import { Chess } from 'chess.js'
 import path from 'node:path'
 import process from 'node:process'
@@ -30,6 +31,8 @@ const videoFrameDurationSeconds = 1
 const videoExportDirectoryName = 'export'
 const videoFinalFrameDurationSeconds = 3
 const videoFps = 30
+const videoInputFps = 1 / videoFrameDurationSeconds
+const videoQualityCrf = 18
 const exportFormatOptions = [
   { label: 'PGN', value: 'pgn' },
   { label: 'Video', value: 'video' },
@@ -282,17 +285,18 @@ async function exportGameToVideoFrames(game: CompletedGame): Promise<string[]> {
 
   const serveUrl = await bundle({
     entryPoint: path.join(repoRoot, 'src', 'components', 'Remotion.tsx'),
-    webpackOverride: currentConfiguration => ({
-      ...currentConfiguration,
-      resolve: {
-        ...currentConfiguration.resolve,
-        extensionAlias: {
-          ...currentConfiguration.resolve?.extensionAlias,
-          '.js': ['.js', '.ts', '.tsx'],
+    webpackOverride: currentConfiguration =>
+      enableTailwind({
+        ...currentConfiguration,
+        resolve: {
+          ...currentConfiguration.resolve,
+          extensionAlias: {
+            ...currentConfiguration.resolve?.extensionAlias,
+            '.js': ['.js', '.ts', '.tsx'],
+          },
+          extensions: [...(currentConfiguration.resolve?.extensions ?? []), '.ts', '.tsx'],
         },
-        extensions: [...(currentConfiguration.resolve?.extensions ?? []), '.ts', '.tsx'],
-      },
-    }),
+      }),
   })
   const renderedFrames: string[] = []
 
@@ -326,7 +330,7 @@ async function exportGameToVideo(game: CompletedGame): Promise<VideoExport> {
   const finalFrameHoldSeconds = videoFinalFrameDurationSeconds - videoFrameDurationSeconds
 
   await quiet(
-    $`ffmpeg -y -hide_banner -loglevel error -framerate 1 -start_number 0 -i ${framePattern} -vf tpad=stop_mode=clone:stop_duration=${finalFrameHoldSeconds},fps=${videoFps},format=yuv420p -movflags +faststart ${output}`,
+    $`ffmpeg -y -hide_banner -loglevel error -framerate ${videoInputFps} -start_number 0 -i ${framePattern} -vf tpad=stop_mode=clone:stop_duration=${finalFrameHoldSeconds},fps=${videoFps} -c:v libx264 -crf ${videoQualityCrf} -preset slow -pix_fmt yuv444p -movflags +faststart ${output}`,
   )
   debug('exported video:', output)
 
