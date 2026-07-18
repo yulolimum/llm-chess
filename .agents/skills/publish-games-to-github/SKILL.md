@@ -135,13 +135,7 @@ Use this structure exactly, while filling values from the game record. Do not ad
 
 ## Replay video
 
-<!-- PASTE VIDEO HERE -->
-
-Manual upload required. Drag and drop the local replay video into this issue from:
-
-```text
-.games/export/<game-id>.mp4
-```
+⚠️ MANUAL UPLOAD REQUIRED - DRAG & DROP VIDEO HERE.
 
 ## PGN
 
@@ -175,7 +169,7 @@ gh issue view "<issue-number-or-url>" -R yulolimum/llm-chess --json title,url,la
 In the final response, report:
 
 - created issue URLs
-- local MP4 paths for manual drag and drop
+- full absolute local MP4 paths for manual drag and drop, labeled as `local video`
 - a clear note that video upload is a manual step in the GitHub web UI
 - any games skipped because they were already posted
 - any failures or manual follow-up needed
