@@ -24,6 +24,7 @@ LLM Chess expects to run from a normal terminal with local CLI tools available.
 - Modern pnpm
 - `tmux`
 - `stockfish` for move analysis
+- `ffmpeg`, only when exporting MP4 replays
 - At least one supported LLM provider CLI:
   - `claude`
   - `codex`
@@ -48,15 +49,21 @@ If `stockfish` is missing on macOS:
 brew install stockfish
 ```
 
+If `ffmpeg` is missing and you want MP4 exports:
+
+```sh
+brew install ffmpeg
+```
+
 ## Running
 
 ### Commands
 
-| Command            | Purpose                                                   |
-| ------------------ | --------------------------------------------------------- |
-| `pnpm game:start`  | Start and watch a live game.                              |
-| `pnpm game:replay` | Replay a completed game record.                           |
-| `pnpm game:export` | Export a completed game record as PGN or rendered frames. |
+| Command            | Purpose                                             |
+| ------------------ | --------------------------------------------------- |
+| `pnpm game:start`  | Start and watch a live game.                        |
+| `pnpm game:replay` | Replay a completed game record.                     |
+| `pnpm game:export` | Export a completed game record as PGN or MP4 video. |
 
 ### Quick Start
 
@@ -135,10 +142,10 @@ pnpm game:replay \
 
 ### Exports
 
-Print a completed game as PGN:
+Export a completed game. PGN is the default format:
 
 ```sh
-pnpm game:export --format pgn
+pnpm game:export
 ```
 
 Export can also be run non-interactively:
@@ -151,7 +158,7 @@ pnpm --silent game:export \
 
 The PGN export contains the validated move sequence and game headers. Stockfish metadata remains in the JSONL record and is not emitted as PGN comments.
 
-Render replay frames with the web board:
+Export a replay video with the web board:
 
 ```sh
 pnpm game:export \
@@ -159,7 +166,7 @@ pnpm game:export \
   --format video
 ```
 
-`--video` is an alias for `--format video`. Video export currently renders one PNG frame per replay position into `.games/tmp/<game-id>-<frame>.png`. It does not encode a final movie file yet. Frames are rendered with Remotion from the web chessboard component, and the final frame includes the game result and ending reason.
+`--video` is an alias for `--format video`. Video export writes the MP4 and rendered PNG frames to `.games/export`. The command renders one PNG per replay position with Remotion, then stitches those frames with `ffmpeg` at one second per position. The final result frame is held for three seconds.
 
 ### UI Previews
 

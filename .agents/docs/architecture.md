@@ -14,7 +14,7 @@ The runner is the only user-facing entry point for a normal live game. It checks
 
 Completed games can be inspected with `pnpm game:replay`. The replay command scans `.games` for completed JSONL records, asks the user to choose a game and playback speed, then renders the recorded positions in the terminal. Interrupted records are preserved but skipped because they do not contain a game-end event.
 
-Completed games can be exported with `pnpm game:export`. The export command scans completed records with the same selection pattern and supports PGN plus supplemental video-frame export. PGN export rebuilds validated moves and headers; Stockfish analysis remains JSONL-only. Video export renders PNG stills for each replay position into `.games/tmp`.
+Completed games can be exported with `pnpm game:export`. The export command scans completed records with the same selection pattern and supports PGN plus supplemental video export. PGN is the default. PGN export rebuilds validated moves and headers; Stockfish analysis remains JSONL-only. Video export checks for ffmpeg only when selected, renders PNG stills for each replay position into `.games/export`, then stitches them into an MP4 in the same directory.
 
 ## Player Sessions
 
@@ -90,7 +90,7 @@ The start event includes player metadata: provider, model, selected effort when 
 
 PGN export rebuilds the game through `chess.js` from the recorded moves, sets standard PGN headers, and prints the generated PGN.
 
-Video-frame export replays the same JSONL record into board props and renders each position through Remotion. It writes one PNG per frame to `.games/tmp/<game-id>-<frame>.png`. The final frame includes the game-end event so player statuses, winner, result, and ending reason are visible. This is supplemental export infrastructure; it does not yet encode a final video file.
+Video export replays the same JSONL record into board props and renders each position through Remotion. It writes one PNG per frame to `.games/export/<game-id>-<frame>.png`, then uses ffmpeg to encode `.games/export/<game-id>.mp4`. The final frame includes the game-end event so player statuses, winner, result, and ending reason are visible. Export timing is one second per replay position, with the final result frame held for three seconds.
 
 Protocol scripts keep their terminal output focused on move submission and turn coordination. Detailed diagnostics are written to the game log.
 
@@ -102,7 +102,7 @@ Stockfish analysis is stored on move events. Analysis records the engine, depth,
 
 Terminal UI components are rendered with Ink.
 
-LLM Chess is a CLI product. The terminal view remains the live game UI. Web rendering is scoped to export frames and browser previews, not a separate app surface.
+LLM Chess is a CLI product. The terminal view remains the live game UI. Web rendering is scoped to replay exports and browser previews, not a separate app surface.
 
 The chessboard reads board state from `chess.js`. UI components should not maintain a separate chess position model when the engine already provides the board state.
 
@@ -120,4 +120,4 @@ The coordination approach has been validated. The non-chess validation code has 
 
 The repository has a terminal-rendered chessboard backed by `chess.js` board state.
 
-The repository has chess-specific move submission, supervisor turn instruction, move validation, Stockfish analysis for accepted moves, completed game replay, completed game PGN export, supplemental video-frame export, match completion detection, explicit game-end records, provider availability checks, player effort and strategy prompts, public move rationales, player metadata in game records, terminal board previews, and web board previews.
+The repository has chess-specific move submission, supervisor turn instruction, move validation, Stockfish analysis for accepted moves, completed game replay, completed game PGN export, supplemental video export, match completion detection, explicit game-end records, provider availability checks, player effort and strategy prompts, public move rationales, player metadata in game records, terminal board previews, and web board previews.

@@ -14,7 +14,7 @@ Example matchup:
 
 The project should feel like a small automated chess lab for observing and comparing model play. Games should be easy to start, visible while they run, and inspectable after they finish.
 
-LLM Chess is CLI-first. The main experience is a terminal game manager, and a general-purpose GUI is not part of the product direction. Browser rendering exists only as export and preview infrastructure.
+LLM Chess is CLI-first. The main experience is a terminal game manager, and a general-purpose GUI is not part of the product direction. Browser rendering exists only as replay export and preview infrastructure.
 
 The start flow asks for white and black player configuration. Provider options are based on installed local CLIs, and model and effort options come from the project's supported provider list. The user can also provide optional strategy guidance for each player before the game starts.
 
@@ -26,7 +26,7 @@ The running game view shows a move feed, Stockfish labels and evaluations, playe
 
 Completed games can be replayed from the terminal. Replay playback focuses on the changing board position, then ends on the final board with the full activity feed and recorded move analysis visible for review.
 
-Completed games can also be exported as PGN for analysis in external chess tools. A supplemental video export path renders one PNG frame per replay position for later video assembly.
+Completed games can also be exported as PGN for analysis in external chess tools. PGN is the default export format. A supplemental video export path renders replay frames and stitches them into an MP4.
 
 Component previews are available through `pnpm dev:storybook` so terminal and web-rendered board views can be checked independently from the game runner.
 
@@ -65,7 +65,7 @@ The workspace contains a TypeScript CLI app and a validated game session launche
 - Terminal and web chessboard components that render from shared `chess.js` board props and display Stockfish move analysis in the move feed.
 - Player provider, model, supported effort, and optional strategy selection when starting a game.
 - Player provider, model, effort, and strategy metadata recorded with each game.
-- Local dependency checks for tmux, Stockfish, and supported provider CLIs.
+- Local dependency checks for tmux, Stockfish, ffmpeg during video export, and supported provider CLIs.
 - Static model and effort option lists for supported CLIs.
 - Chess move submission through agent protocol scripts and turn instruction through the supervisor.
 - Move validation, replay, and basic match completion detection through `chess.js`.
@@ -75,4 +75,4 @@ The workspace contains a TypeScript CLI app and a validated game session launche
 - A repeatable command printed after a completed game.
 - Completed game replay with selectable playback speed.
 - Completed game PGN export for external analysis tools. PGN export omits JSONL-only Stockfish metadata.
-- Supplemental video-frame export through Remotion. Frames are written to `.games/tmp/<game-id>-<frame>.png`, and final frames show winner, result, and ending reason.
+- Supplemental video export through Remotion and ffmpeg. MP4 files and rendered frames are written to `.games/export`, and the final frame shows winner, result, and ending reason.
