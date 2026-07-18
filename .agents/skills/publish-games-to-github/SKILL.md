@@ -15,6 +15,12 @@ Use the existing public release as the video asset bucket:
 game-replays
 ```
 
+Use this GitHub repository explicitly for all GitHub CLI commands:
+
+```text
+yulolimum/llm-chess
+```
+
 ## Rules
 
 - Never create issues without first showing the candidate table and waiting for the user's selection.
@@ -38,8 +44,8 @@ game-replays
 
    ```sh
    gh auth status
-   gh repo view --json nameWithOwner,url
-   gh release view game-replays --json tagName,name,isDraft,isPrerelease,url,assets
+   gh repo view yulolimum/llm-chess --json nameWithOwner,url
+   gh release view game-replays -R yulolimum/llm-chess --json tagName,name,isDraft,isPrerelease,url,assets
    ```
 
 3. Scan completed games:
@@ -53,7 +59,7 @@ game-replays
 4. Find already-posted games:
 
    ```sh
-   gh issue list --state all --limit 1000 --json number,title,url,labels
+   gh issue list -R yulolimum/llm-chess --state all --limit 1000 --json number,title,url,labels
    ```
 
    Match by exact title.
@@ -88,7 +94,7 @@ game-replays
    - Upload the MP4:
 
      ```sh
-     gh release upload game-replays ".games/export/<game-id>.mp4" --clobber
+     gh release upload game-replays ".games/export/<game-id>.mp4" -R yulolimum/llm-chess --clobber
      ```
 
    - Create the `game` label if needed.
@@ -140,7 +146,7 @@ Use this structure exactly, while filling values from the game record.
 Create the issue with:
 
 ```sh
-gh issue create --title "<game-id>" --body-file "<body-file>" --label game
+gh issue create -R yulolimum/llm-chess --title "<game-id>" --body-file "<body-file>" --label game
 ```
 
 ## Validation
@@ -148,8 +154,8 @@ gh issue create --title "<game-id>" --body-file "<body-file>" --label game
 After publishing, verify each issue:
 
 ```sh
-gh issue view "<issue-number-or-url>" --json title,url,labels,body
-gh release view game-replays --json assets
+gh issue view "<issue-number-or-url>" -R yulolimum/llm-chess --json title,url,labels,body
+gh release view game-replays -R yulolimum/llm-chess --json assets
 ```
 
 In the final response, report:
