@@ -26,6 +26,8 @@ yulolimum/llm-chess
 - Never create issues without first showing the candidate table and waiting for the user's selection.
 - Treat a game as already posted when an open or closed issue has the exact game id as its title.
 - Use the exact game id as the issue title. The game id is the `.games/*.jsonl` filename without the `.jsonl` extension.
+- Copy selected game ids from the candidate table or filename. Do not retype or manually transform game ids.
+- Use `pnpm` scripts for project operations. Do not call `tsx src/scripts/...` directly.
 - Add the `game` label to every created issue. Create the label if it does not exist.
 - Include PGN in the issue body inside a fenced `pgn` code block.
 - Do not include exported PNG frame information in the issue.
@@ -102,39 +104,34 @@ yulolimum/llm-chess
 
 ## Issue format
 
-Use this structure exactly, while filling values from the game record.
+Use this structure exactly, while filling values from the game record. Do not add a top-level heading.
 
 ````md
-# Game
-
-| Field   | Value                  |
-| ------- | ---------------------- |
-| Game    | `<game-id>`            |
-| Result  | <winner/result/reason> |
-| Moves   | <move-count>           |
-| Started | <started timestamp>    |
-| Ended   | <ended timestamp>      |
+**Game**: `<game-id>`
+**Result**: <winner/result/reason>
+**Moves**: <move-count>
+**Started**: <started timestamp>
+**Ended**: <ended timestamp>
 
 ## Players
 
-| Color | Provider   | Model   | Effort           |
-| ----- | ---------- | ------- | ---------------- |
-| White | <provider> | <model> | <effort or none> |
-| Black | <provider> | <model> | <effort or none> |
-
-## Strategies
-
 ### White
 
-<white strategy or none>
+**Provider**: <provider>
+**Model**: <model>
+**Effort**: <effort or none>
+**Strategy**: <white strategy or none>
 
 ### Black
 
-<black strategy or none>
+**Provider**: <provider>
+**Model**: <model>
+**Effort**: <effort or none>
+**Strategy**: <black strategy or none>
 
 ## Replay video
 
-[Watch the replay](https://github.com/yulolimum/llm-chess/releases/download/game-replays/<game-id>.mp4)
+<video src="https://github.com/yulolimum/llm-chess/releases/download/game-replays/<game-id>.mp4" controls></video>
 
 ## PGN
 
