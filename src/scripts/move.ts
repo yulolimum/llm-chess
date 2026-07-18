@@ -10,6 +10,7 @@ import { colorToPlayerName, parsePlayerName, playerNameToColor } from '../game/p
 import { readGameState } from '../game/state.js'
 import { analyzeMoveWithStockfish } from '../game/stockfish.js'
 import { createLogger, setSessionLogFile } from '../utils/create-logger.js'
+import { renderTemplateFile } from '../utils/templates.js'
 
 const scriptCommand = 'pnpm agent:move'
 
@@ -73,7 +74,7 @@ const exitCode = await withGameLock(gameGuid, async () => {
   if (state.chess.turn() !== playerColor) {
     output(`It is ${colorToPlayerName(state.chess.turn())}'s turn.`)
     output('')
-    output(`Now run: pnpm agent:wait --game ${gameGuid} --player ${player}`)
+    output('Stop now and wait for the next supervisor instruction.')
     return 1
   }
 
@@ -106,13 +107,6 @@ const exitCode = await withGameLock(gameGuid, async () => {
     turn: colorToPlayerName(nextState.chess.turn()),
   })
 
-  output(`Move accepted: ${move.san}`)
-  output(`Rationale: ${rationale}`)
-  output(`LAN: ${move.lan}`)
-  output(formatGameStatus(nextState.chess))
-  output('')
-  output(formatGameState(nextState))
-
   if (nextState.chess.isGameOver()) {
     const gameEndedEvent = createGameEndedEvent(nextState.chess, {
       ply: nextState.events.filter(event => event.type === 'move').length,
@@ -123,10 +117,25 @@ const exitCode = await withGameLock(gameGuid, async () => {
     logger.info('Game ended:', gameEndedEvent)
 
     output('')
-    output(`Game complete: ${gameEndedEvent.result} by ${gameEndedEvent.reason}. Stop now.`)
+    output(
+      await renderMoveOutput({
+        lan: move.lan,
+        move: move.san,
+        nextInstruction: `Game complete: ${gameEndedEvent.result} by ${gameEndedEvent.reason}. Stop now.`,
+        nextState,
+        rationale,
+      }),
+    )
   } else {
-    output('')
-    output(`Now run: pnpm agent:wait --game ${gameGuid} --player ${player}`)
+    output(
+      await renderMoveOutput({
+        lan: move.lan,
+        move: move.san,
+        nextInstruction: 'Your turn is complete. Stop now and wait for the next supervisor instruction.',
+        nextState,
+        rationale,
+      }),
+    )
   }
 
   return 0
@@ -154,6 +163,23 @@ function requireArg<T>(value: T | undefined, name: string): T {
 function output(...args: Parameters<typeof console.log>): void {
   console.log(...args)
   logger.info(...args)
+}
+
+async function renderMoveOutput(options: {
+  lan: string
+  move: string
+  nextInstruction: string
+  nextState: Awaited<ReturnType<typeof readGameState>>
+  rationale: string
+}): Promise<string> {
+  return renderTemplateFile(new URL('../prompts/agent-move.md', import.meta.url), {
+    gameState: formatGameState(options.nextState),
+    lan: options.lan,
+    move: options.move,
+    nextInstruction: options.nextInstruction,
+    rationale: options.rationale,
+    status: formatGameStatus(options.nextState.chess),
+  })
 }
 
 function safeMove(chess: Chess, move: string): Move | null {

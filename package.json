@@ -26,11 +26,11 @@
   "type": "module",
   "scripts": {
     "agent:move": "tsx src/scripts/move.ts",
-    "agent:wait": "tsx src/scripts/wait.ts",
     "dev:storybook": "tsx src/scripts/storybook.ts",
     "game:export": "tsx src/scripts/export.ts",
     "game:replay": "tsx src/scripts/replay.ts",
-    "game:start": "tsx src/scripts/start.ts"
+    "game:start": "tsx src/scripts/start.ts",
+    "supervisor:instruct": "tsx src/scripts/supervisor-instruct.ts"
   },
   "dependencies": {
     "change-case": "catalog:",
