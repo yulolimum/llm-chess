@@ -121,6 +121,8 @@ yulolimum/llm-chess
 Use this structure exactly, while filling values from the game record. Do not add a top-level heading.
 
 ````md
+## Metadata
+
 **Game**: `<game-id>`
 **Result**: <winner/result/reason>
 **Moves**: <move-count>
