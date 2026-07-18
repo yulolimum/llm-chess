@@ -9,12 +9,6 @@ description: Publish completed LLM Chess games to GitHub issues for review and d
 
 Create GitHub issues for completed LLM Chess games that have not been posted yet. Each issue should be easy to review, discuss, and analyze from GitHub.
 
-Use the existing public release as the video asset bucket:
-
-```text
-game-replays
-```
-
 Use this GitHub repository explicitly for all GitHub CLI commands:
 
 ```text
@@ -37,7 +31,8 @@ yulolimum/llm-chess
 - Deduplicate labels before creating the issue.
 - Include PGN in the issue body inside a fenced `pgn` code block.
 - Do not include exported PNG frame information in the issue.
-- Upload replay videos to the `game-replays` release. Game MP4 filenames are unique, so `--clobber` is acceptable when re-running the publisher for the same game.
+- Do not upload replay videos automatically. GitHub release assets render as downloads, not inline issue videos.
+- In the final report, present the local MP4 path and issue URL as a required manual step so the user can drag and drop the video into the GitHub issue web UI.
 
 ## Workflow
 
@@ -53,7 +48,6 @@ yulolimum/llm-chess
    ```sh
    gh auth status
    gh repo view yulolimum/llm-chess --json nameWithOwner,url
-   gh release view game-replays -R yulolimum/llm-chess --json tagName,name,isDraft,isPrerelease,url,assets
    ```
 
 3. Scan completed games:
@@ -100,12 +94,6 @@ yulolimum/llm-chess
      pnpm game:export --game "<game-id>" --format video
      ```
 
-   - Upload the MP4:
-
-     ```sh
-     gh release upload game-replays ".games/export/<game-id>.mp4" -R yulolimum/llm-chess --clobber
-     ```
-
    - Create the `game` label if needed.
    - Create provider and model labels if needed.
    - Create the GitHub issue with the exact format below.
@@ -147,7 +135,11 @@ Use this structure exactly, while filling values from the game record. Do not ad
 
 ## Replay video
 
-<video src="https://github.com/yulolimum/llm-chess/releases/download/game-replays/<game-id>.mp4" controls></video>
+Manual upload required. Drag and drop the local replay video into this issue from:
+
+```text
+.games/export/<game-id>.mp4
+```
 
 ## PGN
 
@@ -176,12 +168,12 @@ After publishing, verify each issue:
 
 ```sh
 gh issue view "<issue-number-or-url>" -R yulolimum/llm-chess --json title,url,labels,body
-gh release view game-replays -R yulolimum/llm-chess --json assets
 ```
 
 In the final response, report:
 
 - created issue URLs
-- uploaded or reused video URLs
+- local MP4 paths for manual drag and drop
+- a clear note that video upload is a manual step in the GitHub web UI
 - any games skipped because they were already posted
 - any failures or manual follow-up needed
