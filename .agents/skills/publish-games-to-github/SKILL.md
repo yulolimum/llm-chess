@@ -33,7 +33,7 @@ yulolimum/llm-chess
 - Use `pnpm` scripts for project operations. Do not call `tsx src/scripts/...` directly.
 - Add the `game` label to every created issue. Create the label if it does not exist.
 - Add provider labels for both players, formatted as `provider:<provider>`.
-- Add model and effort labels for both players, formatted as `model-effort:<model>_<effort or none>`.
+- Add model labels for both players, formatted as `model:<model>_<effort or none>`.
 - Deduplicate labels before creating the issue.
 - Include PGN in the issue body inside a fenced `pgn` code block.
 - Do not include exported PNG frame information in the issue.
@@ -107,7 +107,7 @@ yulolimum/llm-chess
      ```
 
    - Create the `game` label if needed.
-   - Create provider and model-effort labels if needed.
+   - Create provider and model labels if needed.
    - Create the GitHub issue with the exact format below.
 
    Label creation pattern:
@@ -164,8 +164,8 @@ gh issue create \
   --label game \
   --label "provider:<white-provider>" \
   --label "provider:<black-provider>" \
-  --label "model-effort:<white-model>_<white-effort-or-none>" \
-  --label "model-effort:<black-model>_<black-effort-or-none>"
+  --label "model:<white-model>_<white-effort-or-none>" \
+  --label "model:<black-model>_<black-effort-or-none>"
 ```
 
 ## Validation
