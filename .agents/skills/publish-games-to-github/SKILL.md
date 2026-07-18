@@ -135,7 +135,7 @@ Use this structure exactly, while filling values from the game record. Do not ad
 
 ## Replay video
 
-<!-- paste video here ----->
+<!-- PASTE VIDEO HERE -->
 
 Manual upload required. Drag and drop the local replay video into this issue from:
 
