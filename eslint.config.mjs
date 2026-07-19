@@ -8,20 +8,29 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  // global settings
   {
-    ignores: ['.context/**', '.games/**'],
+    ignores: [
+      '**/build/**',
+      '**/dist/**',
+      '**/dist-ssr/**',
+      '**/node_modules/**',
+      '**/generated/**',
+      '**/coverage/**',
+      '**/out/**',
+      '**/.output/**',
+      '.context/**',
+      '.games/**',
+      '.pnpm-store/**',
+    ],
   },
 
-  // global base
   jseslint.configs.recommended,
   tseslint.configs.recommended,
 
-  // global plugins
   {
     files: ['**/*.{js,jsx,mjs,ts,tsx}'],
     languageOptions: {
-      globals: { ...globals.node },
+      globals: { ...globals.node, ...globals.browser },
     },
     settings: { react: { version: 'detect' } },
     plugins: {
@@ -31,15 +40,12 @@ export default tseslint.config(
       'simple-import-sort': pluginImportSort,
     },
     rules: {
-      // js
       'object-shorthand': 'error',
       'no-unused-vars': 'off',
-      // react
       'react/jsx-handler-names': 'off',
       'react/react-in-jsx-scope': 'off',
       'react-hooks/exhaustive-deps': 'off',
       'react-hooks/rules-of-hooks': 'warn',
-      // ts
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
@@ -56,7 +62,6 @@ export default tseslint.config(
         },
       ],
       'import/no-duplicates': 'error',
-      // imports
       'simple-import-sort/exports': 'error',
       'simple-import-sort/imports': [
         'error',

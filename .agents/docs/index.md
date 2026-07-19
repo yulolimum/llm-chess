@@ -1,4 +1,4 @@
-# Documentation Index
+# Documentation index
 
 This directory contains high-level project context and current architecture documentation.
 
@@ -7,9 +7,9 @@ Committed docs should describe durable project decisions and the current shape o
 ## Documents
 
 - [Project](./project.md): product brief, current product shape, and supported workflows.
-- [Architecture](./architecture.md): runner, tmux sessions, turn coordination, records, and terminal UI decisions.
+- [Architecture](./architecture.md): runner, tmux sessions, turn coordination, records, terminal UI, and replay export rendering.
 
-## Documentation Instructions
+## Documentation instructions
 
 Write documentation tersely. Keep project briefs high level and durable. Keep architecture docs focused on stable decisions and validated patterns.
 

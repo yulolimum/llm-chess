@@ -17,6 +17,7 @@ export type GameStartedEvent = {
 }
 
 export type GameStartedPlayer = {
+  effort?: string
   model: string
   provider: string
   strategy: string
@@ -28,10 +29,46 @@ export type GameStartedPlayers = {
 }
 
 export type MoveEvent = {
+  analysis?: MoveAnalysis
   move: MoveRecord
   rationale?: string
   timestamp: string
   type: 'move'
+}
+
+export type EngineScore =
+  | {
+      type: 'cp'
+      value: number
+    }
+  | {
+      type: 'mate'
+      value: number
+    }
+
+export type EngineWdl = {
+  draw: number
+  loss: number
+  win: number
+}
+
+export type MoveQuality = 'best' | 'blunder' | 'excellent' | 'good' | 'inaccuracy' | 'mistake'
+
+export type MoveAnalysis = {
+  bestMove: string
+  classification: MoveQuality
+  depth: number
+  engine: 'stockfish'
+  evalBest: EngineScore
+  evalLoss?: number
+  evalPlayed: EngineScore
+  expectedPointsBest?: number
+  expectedPointsLost?: number
+  expectedPointsPlayed?: number
+  playedMove: string
+  pv?: string[]
+  wdlBest?: EngineWdl
+  wdlPlayed?: EngineWdl
 }
 
 export type GameResult = '0-1' | '1-0' | '1/2-1/2'

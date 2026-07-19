@@ -2,16 +2,21 @@ if (process.env['NO_COLOR'] === undefined) {
   process.env['FORCE_COLOR'] ||= '1'
 }
 
-import type { GameEndedEvent, GameStartedEvent, GameStartedPlayer, MoveEvent } from '../game/types.js'
+import type { ChessBoardProps } from '../components/ChessBoard.types.js'
+import type { GameEndedEvent, GameEvent, GameStartedEvent, GameStartedPlayer, MoveEvent } from '../game/types.js'
 
 import select from '@inquirer/select'
+import { bundle } from '@remotion/bundler'
+import { renderStill, selectComposition } from '@remotion/renderer'
+import { enableTailwind } from '@remotion/tailwind-v4'
 import { Chess } from 'chess.js'
 import path from 'node:path'
 import process from 'node:process'
-import { fs, minimist } from 'zx'
+import { $, fs, minimist, nothrow, quiet, quote } from 'zx'
 
 import { ensureGamesDirectory, getGamesDirectory, readGameEvents } from '../game/files.js'
-import { getModelLabel, getProviderLabel } from '../game/providers.js'
+import { createBoardPlayers, createMoveFeed } from '../game/presentation.js'
+import { getEffortLabel, getModelLabel, getProviderLabel } from '../game/providers.js'
 import { replayGameEvents } from '../game/state.js'
 
 //
@@ -20,12 +25,30 @@ import { replayGameEvents } from '../game/state.js'
 const scriptName = 'game-export'
 const scriptCommand = 'pnpm game:export'
 const pgnMaxWidth = 80
+const videoCompositionId = 'ChessReplayPreview'
+const videoFrameDigits = 3
+const videoFrameDurationSeconds = 1
+const videoExportDirectoryName = 'export'
+const videoFinalFrameDurationSeconds = 3
+const videoFps = 1
+const videoInputFps = 1 / videoFrameDurationSeconds
+const videoQualityCrf = 10
+const exportFormatOptions = [
+  { label: 'PGN', value: 'pgn' },
+  { label: 'Video', value: 'video' },
+] as const
 
+type ExportFormat = (typeof exportFormatOptions)[number]['value']
 type CompletedGame = {
   ended: GameEndedEvent
+  events: GameEvent[]
   guid: string
   moves: MoveEvent[]
   started: GameStartedEvent
+}
+type VideoExport = {
+  frames: string[]
+  output: string
 }
 
 //
@@ -33,18 +56,24 @@ type CompletedGame = {
 //
 const args = minimist(process.argv.slice(2), {
   alias: { h: 'help', v: 'verbose' },
-  boolean: ['help', 'verbose'],
-  string: ['game'],
+  boolean: ['help', 'verbose', 'video'],
+  string: ['format', 'game'],
 })
 
 const parsedArgs = {
+  format: parseExportFormatArg(args['format'], Boolean(args['video'])),
   game: readStringArg(args['game']),
   help: Boolean(args['help']),
+  video: Boolean(args['video']),
   verbose: Boolean(args['verbose']),
 }
 
 type ArgNames = keyof typeof parsedArgs
 type Args = { [K in ArgNames]: NonNullable<(typeof parsedArgs)[K]> }
+const accumulatedArgs: Partial<Args> = {
+  help: parsedArgs.help,
+  verbose: parsedArgs.verbose,
+}
 
 //
 // Cache
@@ -94,7 +123,9 @@ if (parsedArgs.help) {
   log(`Usage: ${scriptCommand} [options]
 
 Options:
-  --game <guid>       Game record id to export
+  --format <format>   Export format: pgn, video
+  --game <game-id>    Game record id to export
+  --video             Export an MP4 video
   --verbose, -v       Enable debug logs
   --help, -h          Show help
 `)
@@ -109,6 +140,33 @@ if (completedGames.length === 0) {
   process.exit(1)
 }
 
+const selectedFormat = await (async function () {
+  if (parsedArgs.format !== undefined) {
+    accumulatedArgs.format = parsedArgs.format
+    cache.args.format = parsedArgs.format
+    debug('selected format:', parsedArgs.format)
+    await writeCache(cache)
+    return parsedArgs.format
+  }
+
+  const cachedFormat =
+    typeof cache.args.format === 'string' ? parseExportFormatArg(cache.args.format, false) : undefined
+  const format = await select<ExportFormat>({
+    choices: exportFormatOptions.map(option => ({
+      name: option.label,
+      value: option.value,
+    })),
+    default: cachedFormat ?? 'pgn',
+    message: 'Export format?',
+  })
+
+  accumulatedArgs.format = format
+  cache.args.format = format
+  debug('selected format:', format)
+  await writeCache(cache)
+  return format
+})()
+
 const selectedGame = await (async function () {
   const gameByGuid = new Map(completedGames.map(game => [game.guid, game]))
   const requestedGameGuid = parsedArgs.game
@@ -121,6 +179,7 @@ const selectedGame = await (async function () {
       process.exit(1)
     }
 
+    accumulatedArgs.game = requestedGameGuid
     cache.args.game = requestedGameGuid
     debug('selected game:', requestedGameGuid)
     await writeCache(cache)
@@ -143,14 +202,43 @@ const selectedGame = await (async function () {
   }
 
   cache.args.game = selectedGameGuid
+  accumulatedArgs.game = selectedGameGuid
   debug('selected game:', selectedGameGuid)
   await writeCache(cache)
   return selectedGame
 })()
 
-const pgn = exportGameToPgn(selectedGame)
+if (selectedFormat === 'video') {
+  await assertFfmpegInstalled()
+  const video = await exportGameToVideo(selectedGame)
 
-log(pgn)
+  log(`Exported video: ${video.output}`)
+  log(`Rendered ${video.frames.length} video frame${video.frames.length === 1 ? '' : 's'}:`)
+  for (const frame of video.frames) {
+    log(frame)
+  }
+} else {
+  const pgn = exportGameToPgn(selectedGame)
+
+  log(pgn)
+}
+
+//
+// Repeatable CLI command
+//
+const stringArgs = Object.entries(accumulatedArgs).reduce((args, [key, value]) => {
+  if (value === undefined || value === false || key === 'help' || key === 'video') {
+    return args
+  }
+
+  if (typeof value === 'boolean') {
+    return `${args} --${key}`
+  }
+
+  return `${args} --${key} ${quote(value)}`
+}, '')
+
+debug(`re-run export with: ${scriptCommand}${stringArgs}`)
 
 async function listCompletedGames(): Promise<CompletedGame[]> {
   await ensureGamesDirectory()
@@ -179,6 +267,7 @@ async function readCompletedGame(guid: string): Promise<CompletedGame | null> {
 
     return {
       ended,
+      events,
       guid,
       moves: events.filter((event): event is MoveEvent => event.type === 'move'),
       started,
@@ -187,6 +276,99 @@ async function readCompletedGame(guid: string): Promise<CompletedGame | null> {
     debug('skipping unreadable game:', guid, error)
     return null
   }
+}
+
+async function exportGameToVideoFrames(game: CompletedGame): Promise<string[]> {
+  const frames = createVideoFrames(game)
+  const outputDirectory = getVideoExportDirectory()
+  await fs.ensureDir(outputDirectory)
+
+  const serveUrl = await bundle({
+    entryPoint: path.join(repoRoot, 'src', 'components', 'Remotion.tsx'),
+    webpackOverride: currentConfiguration =>
+      enableTailwind({
+        ...currentConfiguration,
+        resolve: {
+          ...currentConfiguration.resolve,
+          extensionAlias: {
+            ...currentConfiguration.resolve?.extensionAlias,
+            '.js': ['.js', '.ts', '.tsx'],
+          },
+          extensions: [...(currentConfiguration.resolve?.extensions ?? []), '.ts', '.tsx'],
+        },
+      }),
+  })
+  const renderedFrames: string[] = []
+
+  for (const frame of frames) {
+    const output = path.join(outputDirectory, `${game.guid}-${String(frame.index).padStart(videoFrameDigits, '0')}.png`)
+    const composition = await selectComposition({
+      id: videoCompositionId,
+      inputProps: frame.props,
+      serveUrl,
+    })
+
+    await renderStill({
+      composition,
+      inputProps: frame.props,
+      output,
+      serveUrl,
+    })
+
+    renderedFrames.push(output)
+    debug('rendered video frame:', output)
+  }
+
+  return renderedFrames
+}
+
+async function exportGameToVideo(game: CompletedGame): Promise<VideoExport> {
+  const frames = await exportGameToVideoFrames(game)
+  const outputDirectory = getVideoExportDirectory()
+  const framePattern = path.join(outputDirectory, `${game.guid}-%03d.png`)
+  const output = path.join(outputDirectory, `${game.guid}.mp4`)
+  const finalFrameHoldSeconds = videoFinalFrameDurationSeconds - videoFrameDurationSeconds
+
+  await quiet(
+    $`ffmpeg -y -hide_banner -loglevel error -framerate ${videoInputFps} -start_number 0 -i ${framePattern} -vf tpad=stop_mode=clone:stop_duration=${finalFrameHoldSeconds},fps=${videoFps} -c:v libx264 -profile:v high -level:v 4.0 -tune animation -crf ${videoQualityCrf} -preset slow -pix_fmt yuv420p -movflags +faststart ${output}`,
+  )
+  debug('exported video:', output)
+
+  return { frames, output }
+}
+
+function getVideoExportDirectory(): string {
+  return path.join(getGamesDirectory(), videoExportDirectoryName)
+}
+
+function createVideoFrames(game: CompletedGame): { index: number; props: ChessBoardProps }[] {
+  return Array.from({ length: game.moves.length + 1 }, (_, moveCount) => ({
+    index: moveCount,
+    props: createVideoFrameProps(game, moveCount),
+  }))
+}
+
+function createVideoFrameProps(game: CompletedGame, moveCount: number): ChessBoardProps {
+  const state = replayGameEvents(createReplayFrameEvents(game, moveCount))
+  const boardPlayers = createBoardPlayers(state)
+
+  return {
+    blackPlayer: boardPlayers.blackPlayer,
+    board: state.chess.board(),
+    moveFeed: createMoveFeed(state),
+    showMoveFeed: true,
+    whitePlayer: boardPlayers.whitePlayer,
+  }
+}
+
+function createReplayFrameEvents(game: CompletedGame, moveCount: number): GameEvent[] {
+  const events: GameEvent[] = [game.started, ...game.moves.slice(0, moveCount)]
+
+  if (moveCount === game.moves.length) {
+    events.push(game.ended)
+  }
+
+  return events
 }
 
 function exportGameToPgn(game: CompletedGame): string {
@@ -254,7 +436,9 @@ function formatPlayerLabel(player: GameStartedPlayer | undefined, fallback: stri
     return fallback
   }
 
-  return `${getProviderLabel(player.provider)} ${getModelLabel(player.provider, player.model)}`
+  const effort = player.effort === undefined ? '' : ` ${getEffortLabel(player.effort)}`
+
+  return `${getProviderLabel(player.provider)} ${getModelLabel(player.provider, player.model)}${effort}`
 }
 
 function formatPgnDate(timestamp: string): string {
@@ -287,4 +471,36 @@ function readStringArg(value: unknown): string | undefined {
   }
 
   return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+function parseExportFormatArg(value: unknown, video: boolean): ExportFormat | undefined {
+  const format = readStringArg(value)
+
+  if (format === undefined) {
+    return video ? 'video' : undefined
+  }
+
+  if (video && format !== 'video') {
+    throw new Error(`Conflicting export options: --video cannot be used with --format ${format}.`)
+  }
+
+  if (isExportFormat(format)) {
+    return format
+  }
+
+  throw new Error(`Unknown export format "${format}". Expected pgn or video.`)
+}
+
+function isExportFormat(value: string): value is ExportFormat {
+  return exportFormatOptions.some(option => option.value === value)
+}
+
+async function assertFfmpegInstalled(): Promise<void> {
+  const result = await quiet(nothrow($`command -v ffmpeg`))
+
+  if (result.exitCode !== 0) {
+    log('ffmpeg is required to export a game video.')
+    log('Install it with: brew install ffmpeg')
+    process.exit(1)
+  }
 }

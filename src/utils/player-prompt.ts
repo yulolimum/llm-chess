@@ -4,6 +4,7 @@ import { colorToPlayerName } from '../game/players.js'
 import { renderTemplateFile } from './templates.js'
 
 export async function renderPlayerPrompt(options: {
+  appendInitialInstruction?: string
   color: Color
   gameGuid: string
   initialFen: string
@@ -14,13 +15,18 @@ export async function renderPlayerPrompt(options: {
   const initialTurn = colorToPlayerName(options.initialTurn)
   const strategy = options.strategy === undefined ? '' : `\nStrategy guidance:\n\n${options.strategy}\n`
 
-  return renderTemplateFile(new URL('../prompts/player.md', import.meta.url), {
+  const promptText = await renderTemplateFile(new URL('../prompts/game-start.md', import.meta.url), {
     color: player,
     gameGuid: options.gameGuid,
     initialFen: options.initialFen,
     initialTurn,
-    moveCommand: `pnpm game:move --game ${options.gameGuid} --player ${player} --move "<move>" --rationale "<public rationale>"`,
+    moveCommand: `pnpm agent:move --game ${options.gameGuid} --player ${player} --move "<move>" --rationale "<public rationale>"`,
     strategy,
-    waitCommand: `pnpm game:wait --game ${options.gameGuid} --player ${player}`,
   })
+
+  if (options.appendInitialInstruction === undefined) {
+    return promptText
+  }
+
+  return `${promptText}\n\n${options.appendInitialInstruction}`
 }

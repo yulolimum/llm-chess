@@ -25,19 +25,28 @@
   "author": "yulolimum",
   "type": "module",
   "scripts": {
+    "agent:move": "tsx src/scripts/move.ts",
+    "dev:storybook": "tsx src/scripts/storybook.ts",
     "game:export": "tsx src/scripts/export.ts",
-    "game:move": "tsx src/scripts/move.ts",
     "game:replay": "tsx src/scripts/replay.ts",
     "game:start": "tsx src/scripts/start.ts",
-    "game:wait": "tsx src/scripts/wait.ts",
-    "storybook": "tsx src/scripts/storybook.ts"
+    "supervisor:instruct": "tsx src/scripts/supervisor-instruct.ts"
   },
   "dependencies": {
+    "@remotion/bundler": "catalog:",
+    "@remotion/cli": "catalog:",
+    "@remotion/renderer": "catalog:",
+    "@remotion/tailwind-v4": "catalog:",
+    "change-case": "catalog:",
     "chess.js": "catalog:",
+    "daisyui": "catalog:",
     "ink": "catalog:",
     "pretty-ms": "catalog:",
     "react": "catalog:",
-    "react-devtools-core": "catalog:"
+    "react-devtools-core": "catalog:",
+    "react-dom": "catalog:",
+    "remotion": "catalog:",
+    "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
@@ -46,6 +55,7 @@
     "@tsconfig/strictest": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-formatter-pretty": "catalog:",
@@ -58,6 +68,7 @@
     "prettier": "catalog:",
     "prettier-plugin-packagejson": "catalog:",
     "prettier-plugin-sh": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",

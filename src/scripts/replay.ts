@@ -15,7 +15,7 @@ import { fs, minimist, quote } from 'zx'
 import { ChessBoard } from '../components/ChessBoard.js'
 import { ensureGamesDirectory, getGamesDirectory, readGameEvents } from '../game/files.js'
 import { createBoardPlayers, createMoveFeed } from '../game/presentation.js'
-import { getModelLabel, getProviderLabel } from '../game/providers.js'
+import { getEffortLabel, getModelLabel, getProviderLabel } from '../game/providers.js'
 import { replayGameEvents } from '../game/state.js'
 
 //
@@ -111,7 +111,7 @@ if (parsedArgs.help) {
   log(`Usage: ${scriptCommand} [options]
 
 Options:
-  --game <guid>       Game record id to replay
+  --game <game-id>    Game record id to replay
   --speed <speed>     Replay speed: slow, normal, fast, instant
   --verbose, -v       Enable debug logs
   --help, -h          Show help
@@ -307,7 +307,9 @@ function formatPlayerLabel(player: GameStartedPlayer | undefined, fallback: stri
     return fallback
   }
 
-  return `${getProviderLabel(player.provider)} ${getModelLabel(player.provider, player.model)}`
+  const effort = player.effort === undefined ? '' : ` ${getEffortLabel(player.effort)}`
+
+  return `${getProviderLabel(player.provider)} ${getModelLabel(player.provider, player.model)}${effort}`
 }
 
 function formatTimestamp(timestamp: string): string {

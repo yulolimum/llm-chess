@@ -5,7 +5,7 @@ import type { PieceSymbol } from 'chess.js'
 
 import prettyMilliseconds from 'pretty-ms'
 
-import { getModelLabel, getProviderLabel } from './providers.js'
+import { getEffortLabel, getModelLabel, getProviderLabel } from './providers.js'
 
 type CapturedPiecesByPlayer = {
   black: CapturedPiece[]
@@ -55,6 +55,13 @@ export function createMoveFeed(state: GameState): MoveFeedEntry[] {
         type: 'move',
       }
 
+      if (event.analysis !== undefined) {
+        entry.analysis = {
+          classification: event.analysis.classification,
+          eval: event.analysis.evalPlayed,
+        }
+      }
+
       if (duration !== undefined) {
         entry.duration = duration
       }
@@ -68,10 +75,18 @@ export function createMoveFeed(state: GameState): MoveFeedEntry[] {
     }
 
     if (event.type === 'game_ended') {
-      entries.push({
+      const entry: MoveFeedEntry = {
+        reason: event.reason,
+        result: event.result,
         text: `Game ended: ${event.result} by ${event.reason}`,
         type: 'game-ended',
-      })
+      }
+
+      if (event.winner !== undefined) {
+        entry.winner = event.winner
+      }
+
+      entries.push(entry)
     }
   }
 
@@ -131,12 +146,17 @@ function createChessBoardPlayer(
 ): ChessBoardPlayer {
   const provider = player === undefined ? colorToFallbackPlayerName(color) : getProviderLabel(player.provider)
   const model = player === undefined ? 'Unknown player' : getModelLabel(player.provider, player.model)
+  const effort = player?.effort === undefined ? undefined : getEffortLabel(player.effort)
   const strategy = player?.strategy.trim()
   const status = createPlayerStatus(color, state)
   const displayPlayer: ChessBoardPlayer = {
     capturedPieces,
     model,
     provider,
+  }
+
+  if (effort !== undefined) {
+    displayPlayer.effort = effort
   }
 
   if (strategy !== undefined && strategy.length > 0) {

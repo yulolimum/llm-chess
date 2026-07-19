@@ -4,6 +4,7 @@ import type {
   GameResult,
   GameStartedEvent,
   GameStartedPlayers,
+  MoveAnalysis,
   MoveEvent,
   MoveRecord,
 } from './types.js'
@@ -27,13 +28,19 @@ export function createGameStartedEvent(options: { players?: GameStartedPlayers }
   return event
 }
 
-export function createMoveEvent(move: Move, options: { rationale: string }): MoveEvent {
-  return {
+export function createMoveEvent(move: Move, options: { analysis?: MoveAnalysis; rationale: string }): MoveEvent {
+  const event: MoveEvent = {
     move: createMoveRecord(move),
     rationale: options.rationale,
     timestamp: new Date().toISOString(),
     type: 'move',
   }
+
+  if (options.analysis !== undefined) {
+    event.analysis = options.analysis
+  }
+
+  return event
 }
 
 export function createGameEndedEvent(chess: Chess, options: { ply: number }): GameEndedEvent {

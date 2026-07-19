@@ -4,14 +4,24 @@ packages:
 allowBuilds:
   esbuild: true
 
+overrides:
+  zod: '4.3.6'
+
 catalog:
   '@eslint/js': '9.39.4'
   '@inquirer/input': '5.1.2'
   '@inquirer/select': '5.2.1'
+  '@remotion/bundler': '4.0.490'
+  '@remotion/cli': '4.0.490'
+  '@remotion/renderer': '4.0.490'
+  '@remotion/tailwind-v4': '4.0.490'
   '@tsconfig/strictest': '2.0.8'
   '@types/node': '25.9.3'
   '@types/react': '19.2.17'
+  '@types/react-dom': '19.2.3'
+  change-case: '5.4.4'
   chess.js: '1.4.0'
+  daisyui: '5.6.18'
   eslint: '9.39.4'
   eslint-config-prettier: '10.1.8'
   eslint-formatter-pretty: '7.1.0'
@@ -26,8 +36,12 @@ catalog:
   pretty-ms: '9.3.0'
   prettier-plugin-packagejson: '3.0.2'
   prettier-plugin-sh: '0.18.1'
+  prettier-plugin-tailwindcss: '0.8.0'
   react: '19.2.7'
   react-devtools-core: '7.0.1'
+  react-dom: '19.2.7'
+  remotion: '4.0.490'
+  tailwindcss: '4.3.3'
   tsx: '4.22.4'
   typescript: '6.0.3'
   typescript-eslint: '8.61.0'

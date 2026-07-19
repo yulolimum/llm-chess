@@ -10,18 +10,18 @@ The runner owns the game session. It checks required local tooling, creates the 
 
 The runner is intended to run from a normal terminal. It is not designed around Conductor's non-interactive shell as the game runtime.
 
-The runner is the only user-facing entry point for a normal game. It asks for white and black player configuration, filters providers to installed local CLIs, and stores selected settings so a completed game can be rerun with the same configuration.
+The runner is the only user-facing entry point for a normal live game. It checks tmux, Stockfish, and provider CLIs; asks for white and black player configuration including model effort when supported; filters providers to installed local CLIs; and stores selected settings so a completed game can be rerun with the same configuration.
 
-Completed games can be inspected with `pnpm game:replay`. The replay command scans `.games` for completed JSONL records, asks the user to choose a game and playback speed, then renders the recorded positions in the terminal.
+Completed games can be inspected with `pnpm game:replay`. The replay command scans `.games` for completed JSONL records, asks the user to choose a game and playback speed, then renders the recorded positions in the terminal. Interrupted records are preserved but skipped because they do not contain a game-end event.
 
-Completed games can be exported with `pnpm game:export`. The export command scans completed records with the same selection pattern and prints PGN to the terminal.
+Completed games can be exported with `pnpm game:export`. The export command scans completed records with the same selection pattern and supports PGN plus supplemental video export. PGN is the default. PGN export rebuilds validated moves and headers; Stockfish analysis remains JSONL-only. Video export checks for ffmpeg only when selected, renders PNG stills for each replay position into `.games/export`, then stitches them into an MP4 in the same directory.
 
-## Player Sessions
+## Player sessions
 
 Each player runs in its own tmux session. The sessions are named from the game id:
 
-- `llm-chess-<guid>-white`
-- `llm-chess-<guid>-black`
+- `llm-chess-<game-id>-white`
+- `llm-chess-<game-id>-black`
 
 The runner starts these sessions but does not attach to them. The foreground process remains the game manager.
 
@@ -29,28 +29,37 @@ Before starting a new game, existing LLM Chess tmux sessions are cleared so each
 
 When the game ends, or when the runner is interrupted, the runner stops the player sessions while preserving the game record and log files.
 
-## Turn Coordination
+## Turn coordination
 
-The validated coordination pattern is script-mediated.
+The validated coordination pattern is supervisor-mediated through `pnpm supervisor:instruct` and `pnpm agent:move`. These are protocol commands, not normal user entry points.
 
-An LLM does not independently watch the game state. Instead, when it has acted, it calls a project script that waits until the opposing player has acted. That script resolves only when it is useful for the model to continue.
+An LLM does not independently watch the game state. Instead, the runner watches the JSONL record and sends the active player a supervisor instruction when it is time to move.
 
 This pattern keeps each model in a continuous session while keeping turn progression deterministic and observable.
 
-Player prompts instruct the model to call the project scripts for every move and wait. The scripts print only the information the model needs to continue.
+Player setup prompts are passed as the provider CLI's initial prompt when the tmux session is created. This avoids racing an interactive TUI during startup. White's setup prompt also includes the first supervisor turn instruction, because White is always first in the current game setup.
+
+After the first move, the runner watches the JSONL record and sends the next active player a supervisor instruction through the live tmux session. If no move is recorded for the instructed player after the retry interval, the runner sends a stalled-turn instruction to the same player.
+
+Player prompts instruct the model to wait for supervisor messages, then call `pnpm agent:move` for every move. After an accepted move, the model stops and waits for the next supervisor instruction. There is no separate player-side wait or polling command.
 
 ## Responsibilities
 
 The player is responsible for chess reasoning and move selection.
 
-Project scripts are responsible for:
+Agent protocol scripts are responsible for:
 
 - accepting or rejecting moves,
+- analyzing accepted moves with Stockfish,
 - updating the game record,
-- detecting whose turn is next,
-- blocking while the model should wait,
-- returning clear output when the model should continue,
 - detecting completed games and recording the final result.
+
+Supervisor instructions are responsible for:
+
+- detecting whose turn is next,
+- sending the current board context to the active player session,
+- retrying the active player after a stalled turn,
+- keeping turn handoff out of the player process.
 
 Players submit moves as plain move text with a concise public rationale. They do not write game records directly.
 
@@ -58,43 +67,57 @@ Invalid or unparsable moves are rejected by the move script. The model receives 
 
 Resignation is intentionally not supported yet.
 
-## Game Records
+## Stockfish
+
+Stockfish is invoked as a local UCI engine. The project shells out to the `stockfish` binary; it does not call an external chess-analysis API.
+
+Accepted moves are analyzed from the pre-move FEN. The analysis compares the engine's preferred move with the played move, then stores a move-quality label and engine evaluation for later display.
+
+Stockfish analysis is part of the accepted-move path. If the engine is missing, `pnpm game:start` fails before starting player sessions.
+
+## Game records
 
 Each game writes two runtime files:
 
-- `.games/<guid>.jsonl` for game state and events,
-- `.games/<guid>.log` for runner logs.
+- `.games/<epoch-ms>--<white-model>_<white-effort>--<black-model>_<black-effort>.jsonl` for game state and events,
+- `.games/<epoch-ms>--<white-model>_<white-effort>--<black-model>_<black-effort>.log` for runner logs.
 
 The JSONL record is the source of truth for reconstructing a game. The log file is operational output.
 
-Game records include the starting position, validated moves, public rationales, and a terminal event when the match ends. The end event records the final position, result, and resolution reason, such as checkmate or draw.
+Game records include the starting position, validated moves, public rationales, Stockfish move analysis, and a game-end event when the match ends. The end event records the final position, result, and resolution reason, such as checkmate or draw.
 
-The start event includes player metadata: provider, model, and strategy text. This keeps completed records self-describing for replay and later inspection.
+The start event includes player metadata: provider, model, selected effort when present, and strategy text. This keeps completed records self-describing for replay and later inspection.
 
 PGN export rebuilds the game through `chess.js` from the recorded moves, sets standard PGN headers, and prints the generated PGN.
 
-Player scripts keep their terminal output focused on turn coordination. Detailed diagnostics are written to the game log.
+Video export replays the same JSONL record into board props and renders each position through Remotion. It writes one PNG per replay position to `.games/export/<game-id>-<frame>.png`, then uses ffmpeg to encode `.games/export/<game-id>.mp4`. Export timing is one second per replay position, with the final result frame held for three seconds. The MP4 is encoded as H.264 at 1 FPS with `yuv420p` pixels, animation tuning, and CRF 10 compression so GitHub and browser video players can decode it while preserving sharp UI edges.
+
+Protocol scripts keep their terminal output focused on move submission and turn coordination. Detailed diagnostics are written to the game log.
 
 Move duration in the UI is derived from game event timestamps.
 
-## Terminal UI
+Stockfish analysis is stored on move events. Analysis records the engine, depth, best move, played move, White-normalized engine evaluations, mover-perspective loss, expected-points loss when WDL is available, principal variation, and move-quality label.
+
+## UI rendering
 
 Terminal UI components are rendered with Ink.
 
-LLM Chess is a CLI product. UI architecture should stay focused on terminal rendering rather than preparing for a GUI.
+LLM Chess is a CLI product. The terminal view remains the live game UI. Web rendering is scoped to replay exports and browser previews, not a separate app surface.
 
 The chessboard reads board state from `chess.js`. UI components should not maintain a separate chess position model when the engine already provides the board state.
 
-The main game view shows the full move feed, white and black player metadata, player strategy guidance when present, captured pieces, player status, and the current board. The move feed is meant to make the match understandable while it is running, not only after inspecting files.
+The main game view shows the full move feed, white and black player metadata, selected effort when present, player strategy guidance when present, captured pieces, player status, and the current board. The move feed includes public rationales plus Stockfish labels and evaluations such as `Best · +0.44`. Evaluations use standard chess-engine sign convention: positive favors White and negative favors Black.
 
 Replay uses the same board component as the live game view. During playback, it hides the move feed so the changing position is the focus. The final replay frame shows the full feed alongside the completed board.
 
-The local storybook script is used to preview terminal UI components outside the game runner.
+The web chessboard accepts the same shared board props as the terminal chessboard but uses browser layout for rendered frames. It is styled with Tailwind CSS and daisyUI, and Remotion is configured to process that stylesheet for both preview and export rendering. It shows player rails, captured pieces, status badges, Stockfish labels, a newest-first move feed, and a final result banner when the game-end event is present. The latest completed move is marked inside the feed, and older feed rows are clipped by the feed panel instead of removed before rendering.
 
-## Current State
+The local `pnpm dev:storybook` script is used to preview board components outside the game runner. It supports the terminal board preview and the web board preview used by Remotion.
+
+## Current state
 
 The coordination approach has been validated. The non-chess validation code has been removed.
 
 The repository has a terminal-rendered chessboard backed by `chess.js` board state.
 
-The repository has chess-specific move submission, move validation, turn waiting, completed game replay, completed game PGN export, match completion detection, explicit game-end records, provider availability checks, player strategy prompts, public move rationales, player metadata in game records, and terminal UI previews.
+The repository has chess-specific move submission, supervisor turn instruction, move validation, Stockfish analysis for accepted moves, completed game replay, completed game PGN export, supplemental video export, match completion detection, explicit game-end records, provider availability checks, player effort and strategy prompts, public move rationales, player metadata in game records, terminal board previews, and web board previews.
