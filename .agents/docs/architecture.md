@@ -90,7 +90,7 @@ The start event includes player metadata: provider, model, selected effort when 
 
 PGN export rebuilds the game through `chess.js` from the recorded moves, sets standard PGN headers, and prints the generated PGN.
 
-Video export replays the same JSONL record into board props and renders each position through Remotion. It writes one PNG per replay position to `.games/export/<game-id>-<frame>.png`, then uses ffmpeg to encode `.games/export/<game-id>.mp4`. Export timing is one second per replay position, with the final result frame held for three seconds. The MP4 is encoded at 30 FPS with 4:4:4 color and CRF 18 compression, which avoids the color halos that 4:2:0 encoding can add around sharp replay badges.
+Video export replays the same JSONL record into board props and renders each position through Remotion. It writes one PNG per replay position to `.games/export/<game-id>-<frame>.png`, then uses ffmpeg to encode `.games/export/<game-id>.mp4`. Export timing is one second per replay position, with the final result frame held for three seconds. The MP4 is encoded as H.264 at 30 FPS with `yuv420p` pixels and CRF 18 compression so GitHub and browser video players can decode it.
 
 Protocol scripts keep their terminal output focused on move submission and turn coordination. Detailed diagnostics are written to the game log.
 

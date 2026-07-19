@@ -26,7 +26,7 @@ The running game view shows a move feed, Stockfish labels and evaluations, playe
 
 Completed games can be replayed from the terminal. Replay playback focuses on the changing board position, then ends on the final board with the full activity feed and recorded move analysis visible for review.
 
-Completed games can also be exported as PGN for analysis in external chess tools. PGN is the default export format. A supplemental video export path renders replay frames and stitches them into an MP4 with higher color fidelity than the compatibility-oriented default encodes common in web video.
+Completed games can also be exported as PGN for analysis in external chess tools. PGN is the default export format. A supplemental video export path renders replay frames and stitches them into a browser-compatible MP4.
 
 Component previews are available through `pnpm dev:storybook` so terminal and web-rendered board views can be checked independently from the game runner.
 

@@ -330,7 +330,7 @@ async function exportGameToVideo(game: CompletedGame): Promise<VideoExport> {
   const finalFrameHoldSeconds = videoFinalFrameDurationSeconds - videoFrameDurationSeconds
 
   await quiet(
-    $`ffmpeg -y -hide_banner -loglevel error -framerate ${videoInputFps} -start_number 0 -i ${framePattern} -vf tpad=stop_mode=clone:stop_duration=${finalFrameHoldSeconds},fps=${videoFps} -c:v libx264 -crf ${videoQualityCrf} -preset slow -pix_fmt yuv444p -movflags +faststart ${output}`,
+    $`ffmpeg -y -hide_banner -loglevel error -framerate ${videoInputFps} -start_number 0 -i ${framePattern} -vf tpad=stop_mode=clone:stop_duration=${finalFrameHoldSeconds},fps=${videoFps} -c:v libx264 -crf ${videoQualityCrf} -preset slow -pix_fmt yuv420p -movflags +faststart ${output}`,
   )
   debug('exported video:', output)
 
