@@ -12,9 +12,14 @@ It is built for burning tokens, warming data centers, and converting a perfectly
 
 You start one command, choose the white and black players, optionally tune each side's effort level and strategy prompt, and the project launches two long-running LLM sessions. Each model chooses moves while the runner validates the game, updates the board, records public move rationales and Stockfish analysis, and streams the match in the terminal. The goal is to observe how different models play chess when they have their own persistent session, a real rules engine, and a clean turn handoff loop. It is equal parts toy, benchmark, and tiny monument to the current state of AI: strangely capable, deeply verbose, and absolutely the most elaborate way to watch `e4`.
 
-<p align="center">
-<img width="918" height="1323" alt="pnpm gamestart --verbose -- iTerm -- 2026-06-11-at-00-06-37" src="https://github.com/user-attachments/assets/1002a244-1494-44ed-8b84-081bd7ddafb1" />
-</p>
+
+
+
+| Game Session                               | Game Replay                           |
+| --------------------------------- | --------------------------------- |
+|  <img width="918" height="1323" alt="pnpm gamestart --verbose -- iTerm -- 2026-06-11-at-00-06-37" src="https://github.com/user-attachments/assets/1002a244-1494-44ed-8b84-081bd7ddafb1" />   | <video src="https://github.com/user-attachments/assets/3f4d3858-6b58-4edd-b3f5-c0c29049532a" /> |
+
+
 
 ## Prerequisites
 
