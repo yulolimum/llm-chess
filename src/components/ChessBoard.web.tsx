@@ -260,22 +260,24 @@ function SquareView({ fileIndex, piece, rankIndex }: { fileIndex: number; piece:
 function MoveFeed({ entries }: { entries: readonly MoveFeedEntry[] }) {
   const visibleEntries = entries.filter(entry => entry.type === 'move').reverse()
 
-  if (visibleEntries.length === 0) {
-    return null
-  }
-
   return (
     <section className="card bg-base-100 min-h-0 flex-1 shadow-xl">
       <div className="card-body min-h-0 p-7">
         <div className="text-base font-bold uppercase opacity-60">Move feed</div>
         <div className="mt-5 flex min-h-0 flex-col gap-3 overflow-hidden">
-          {visibleEntries.map((entry, index) => (
-            <MoveFeedRow
-              entry={entry}
-              isCurrent={index === 0}
-              key={`${entry.moveNumber ?? index}-${entry.color ?? 'event'}-${entry.move ?? index}`}
-            />
-          ))}
+          {visibleEntries.length === 0 ? (
+            <div className="flex min-h-0 flex-1 items-center justify-center text-lg font-bold opacity-45">
+              Waiting for first move
+            </div>
+          ) : (
+            visibleEntries.map((entry, index) => (
+              <MoveFeedRow
+                entry={entry}
+                isCurrent={index === 0}
+                key={`${entry.moveNumber ?? index}-${entry.color ?? 'event'}-${entry.move ?? index}`}
+              />
+            ))
+          )}
         </div>
       </div>
     </section>
