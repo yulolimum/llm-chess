@@ -28,6 +28,8 @@ Completed games can be replayed from the terminal. Replay playback focuses on th
 
 Completed games can also be exported as PGN for analysis in external chess tools. PGN is the default export format. A supplemental video export path renders replay frames and stitches them into a browser-compatible MP4.
 
+Completed games can be published as GitHub issues for review and discussion. Each issue includes game metadata and PGN. It links to public JSONL and runner log release assets and provides social sharing links. Videos are attached manually so GitHub renders them inline.
+
 Component previews are available through `pnpm dev:storybook` so terminal and web-rendered board views can be checked independently from the game runner.
 
 ## Player model
@@ -76,3 +78,4 @@ The workspace contains a TypeScript CLI app and a validated game session launche
 - Completed game replay with selectable playback speed.
 - Completed game PGN export for external analysis tools. PGN export omits JSONL-only Stockfish metadata.
 - Supplemental video export through Remotion and ffmpeg. MP4 files and rendered frames are written to `.games/export`, and the final frame shows the winner, ending reason, move feed with latest move marker, and attribution.
+- Completed game publishing to GitHub issues with release-hosted JSONL and runner log files, social sharing links, and manual video attachment.
