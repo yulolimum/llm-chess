@@ -27,10 +27,13 @@
   "scripts": {
     "agent:move": "tsx src/scripts/move.ts",
     "dev:storybook": "tsx src/scripts/storybook.ts",
+    "format": "prettier --write . --ignore-unknown --cache --log-level=error",
     "game:export": "tsx src/scripts/export.ts",
     "game:replay": "tsx src/scripts/replay.ts",
     "game:start": "tsx src/scripts/start.ts",
-    "supervisor:instruct": "tsx src/scripts/supervisor-instruct.ts"
+    "lint": "eslint --fix --cache --format=pretty .",
+    "supervisor:instruct": "tsx src/scripts/supervisor-instruct.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@remotion/bundler": "catalog:",
