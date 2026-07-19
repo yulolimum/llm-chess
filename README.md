@@ -181,3 +181,12 @@ Preview the web chessboard used for rendered replay frames:
 ```sh
 pnpm dev:storybook --component chessboard-web
 ```
+
+## Agent Skills
+
+The repo ships Claude Code skills for repeatable operator workflows. Invoke them from a Claude Code session by name.
+
+| Skill                     | Purpose                                                                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `publish-games-to-github` | Post completed games as GitHub issues — matchup-titled, with PGN and provider/model labels. The MP4 is attached manually. |
+| `update-provider-models`  | Refresh the supported Claude and Codex model catalog in `src/game/providers.ts` (model IDs, labels, default/supported efforts). |
