@@ -30,9 +30,9 @@ const videoFrameDigits = 3
 const videoFrameDurationSeconds = 1
 const videoExportDirectoryName = 'export'
 const videoFinalFrameDurationSeconds = 3
-const videoFps = 30
+const videoFps = 1
 const videoInputFps = 1 / videoFrameDurationSeconds
-const videoQualityCrf = 18
+const videoQualityCrf = 16
 const exportFormatOptions = [
   { label: 'PGN', value: 'pgn' },
   { label: 'Video', value: 'video' },
